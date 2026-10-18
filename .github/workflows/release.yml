@@ -1,0 +1,49 @@
+name: Release
+
+# Publishes the prebuilt firmware as release assets whenever a v* tag is pushed.
+# The images are also committed in firmware/ts35/, so this is a convenience for
+# people who prefer downloading from the Releases page.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify firmware checksums
+        working-directory: firmware/ts35
+        run: sha256sum -c SHA256SUMS
+
+      - name: Package firmware zip
+        run: |
+          cd firmware/ts35
+          zip -9 -j "$GITHUB_WORKSPACE/ttc450-ts35-firmware.zip" \
+            ttc450-ts35-8mb.bin ttc450-ts35-4mb.bin \
+            bootloader.bin partitions.bin boot_app0.bin \
+            firmware.bin littlefs.bin SHA256SUMS BUILD-INFO.txt README.md
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ttc450-ts35-firmware.zip
+            firmware/ts35/ttc450-ts35-8mb.bin
+            firmware/ts35/ttc450-ts35-4mb.bin
+            firmware/ts35/firmware.bin
+            firmware/ts35/bootloader.bin
+            firmware/ts35/partitions.bin
+            firmware/ts35/boot_app0.bin
+            firmware/ts35/littlefs.bin
+            firmware/ts35/SHA256SUMS
+            firmware/ts35/BUILD-INFO.txt
+          generate_release_notes: true

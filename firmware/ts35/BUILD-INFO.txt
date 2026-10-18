@@ -1,0 +1,15 @@
+Build: FluidNC + TS35 module (community PR #1805)
+Base commit: d93a72b2edc2902b5114128bedcf9f953afc16ec
+Branch: feat/ts35-display-module (thcasssio/FluidNC)
+PlatformIO env: wifi
+Platform: platformio/espressif32@6.12.0
+Framework: Arduino core 2.0.17 (GCC 8.4.0)
+Board: MKS DLC32 V2.1 (ESP32, 8 MB flash)
+Panel: MKS TS35-R V2.0 (ST7796 LCD + ADS7843E touch)
+Flash: 1,830,957 / 1,966,080 bytes (93.1%)
+Build date: 2026-10-18
+WebUI: FluidNC data/index.html.gz + favicon.ico
+Configs in LittleFS:
+  /config.yaml             -> config_cnc_ts35.yaml
+  /config_cnc_ts35.yaml
+  /config_laser_ts35.yaml

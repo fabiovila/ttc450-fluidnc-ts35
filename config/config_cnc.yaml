@@ -1,0 +1,186 @@
+# =============================================================================
+# TTC450 - modo CNC (fresa / spindle)
+# Placa: MKS DLC32 V2.1 (ESP32, 8 MB flash)
+# Base: config pública do diode-laser-wiki (02/02/2024), revisada e validada
+#       contra o FluidNC v4.1.1.
+#
+# Use este arquivo no FluidNC e troque para o modo laser com:
+#   $Config/Filename=config_laser.yaml
+#   $Bye
+#
+# IMPORTANTE: o modo CNC e o modo laser usam o MESMO pino (gpio.32).
+# No modo CNC ele vai para a porta CNC de 2 pinos (0-24 V, relé do spindle).
+# No modo laser ele vai para a porta TTL de 3 pinos (0-5 V).
+# O cabo físico (spindle x módulo laser) continua tendo que ser trocado.
+# =============================================================================
+
+board: MKS DLC32 2.1
+name: TTC450 CNC
+meta: TTC450 / MKS DLC32 V2.1 - config CNC
+
+arc_tolerance_mm: 0.002
+junction_deviation_mm: 0.01
+verbose_errors: false
+report_inches: false
+
+stepping:
+  engine: I2S_STATIC
+  # A config original usava 25 ms. 255 ms evita que o eixo Z caia entre
+  # comandos por causa do fuso. Se quiser o comportamento original, use 25.
+  idle_ms: 255
+  pulse_us: 6
+  dir_delay_us: 10
+  disable_delay_us: 0
+
+axes:
+  shared_stepper_disable_pin: I2SO.0
+
+  x:
+    steps_per_mm: 800.000
+    max_rate_mm_per_min: 800.000
+    acceleration_mm_per_sec2: 400.000
+    max_travel_mm: 460.000
+    soft_limits: false
+    homing:
+      cycle: 2
+      allow_single_axis: true
+      positive_direction: false
+      mpos_mm: 0.000
+      feed_mm_per_min: 75.000
+      seek_mm_per_min: 600.000
+      settle_ms: 500
+      seek_scaler: 1.100
+      feed_scaler: 1.100
+    motor0:
+      limit_all_pin: gpio.36:low
+      hard_limits: true
+      pulloff_mm: 1.000
+      standard_stepper:
+        step_pin: I2SO.1
+        direction_pin: I2SO.2:low
+
+  y:
+    steps_per_mm: 800.000
+    max_rate_mm_per_min: 800.000
+    acceleration_mm_per_sec2: 400.000
+    max_travel_mm: 460.000
+    soft_limits: false
+    homing:
+      cycle: 2
+      allow_single_axis: true
+      positive_direction: false
+      mpos_mm: 0.000
+      feed_mm_per_min: 75.000
+      seek_mm_per_min: 600.000
+      settle_ms: 500
+      seek_scaler: 1.100
+      feed_scaler: 1.100
+    motor0:
+      limit_all_pin: gpio.35:low
+      hard_limits: true
+      pulloff_mm: 1.000
+      standard_stepper:
+        step_pin: I2SO.5
+        direction_pin: I2SO.6:low
+
+  z:
+    steps_per_mm: 800.000
+    max_rate_mm_per_min: 800.000
+    acceleration_mm_per_sec2: 400.000
+    max_travel_mm: 80.000
+    soft_limits: false
+    homing:
+      # O Z sobe para o fim de curso (positive_direction: true).
+      # O ciclo 1 faz o Z homing antes do X/Y.
+      cycle: 1
+      allow_single_axis: true
+      positive_direction: true
+      mpos_mm: 0.000
+      feed_mm_per_min: 75.000
+      seek_mm_per_min: 400.000
+      settle_ms: 500
+      seek_scaler: 1.100
+      feed_scaler: 1.100
+    motor0:
+      limit_all_pin: gpio.34:low
+      hard_limits: true
+      pulloff_mm: 1.000
+      standard_stepper:
+        step_pin: I2SO.3
+        direction_pin: I2SO.4:low
+
+i2so:
+  bck_pin: gpio.16
+  data_pin: gpio.21
+  ws_pin: gpio.17
+
+# SPI do cartão SD (VSPI). O LCD TS35 usa outra SPI (18/19/23 + 25/26/27/33).
+spi:
+  miso_pin: gpio.12
+  mosi_pin: gpio.13
+  sck_pin: gpio.14
+
+sdcard:
+  card_detect_pin: NO_PIN
+  cs_pin: gpio.15
+
+probe:
+  pin: gpio.22:low
+  check_mode_start: true
+
+start:
+  must_home: false
+
+coolant:
+  flood_pin: NO_PIN
+  mist_pin: NO_PIN
+  delay_ms: 0
+
+# Spindle / relé da porta CNC (2 pinos, 0-24 V).
+# O relé de 24 V fecha acima de ~12 V, ou seja, a partir de ~50% de PWM.
+# Para ligar com segurança use M3 S12000 (100%).
+PWM:
+  pwm_hz: 5000
+  direction_pin: NO_PIN
+  output_pin: gpio.32
+  enable_pin: NO_PIN
+  disable_with_s0: false
+  s0_with_disable: true
+  spinup_ms: 0
+  spindown_ms: 0
+  tool_num: 0
+  speed_map: 0=0.000% 12000=100.000%
+  off_on_alarm: false
+
+control:
+  safety_door_pin: NO_PIN
+  reset_pin: NO_PIN
+  feed_hold_pin: NO_PIN
+  cycle_start_pin: NO_PIN
+  macro0_pin: NO_PIN
+  macro1_pin: NO_PIN
+  macro2_pin: NO_PIN
+  macro3_pin: NO_PIN
+
+macros:
+  startup_line0:
+  startup_line1:
+  macro0:
+  macro1:
+  macro2:
+  macro3:
+
+user_outputs:
+  analog0_pin: NO_PIN
+  analog1_pin: NO_PIN
+  analog2_pin: NO_PIN
+  analog3_pin: NO_PIN
+  analog0_hz: 5000
+  analog1_hz: 5000
+  analog2_hz: 5000
+  analog3_hz: 5000
+  digital0_pin: NO_PIN
+  digital1_pin: NO_PIN
+  digital2_pin: NO_PIN
+  digital3_pin: NO_PIN
+
