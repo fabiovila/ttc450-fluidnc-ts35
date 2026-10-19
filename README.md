@@ -89,9 +89,10 @@ First boot:
    $Bye
    ```
 
-4. The touchscreen starts in **read-only mode** (`controls_enabled: false`).
-   Go to the **INFO** page, read the raw touch values and calibrate before
-   enabling controls. Full procedure:
+4. The shipped configs enable **JOG, ZERO, UNLOCK and CLEAR ALARM** on the panel
+   (`controls_enabled: true`), but keep **HOME** and **soft reset** disabled.
+   Check that a tap lands on the intended button; if the touch is off, set
+   `controls_enabled: false` and calibrate on the **INFO** page. Full procedure:
    [docs/en/ts35-firmware.md](docs/en/ts35-firmware.md) ·
    [docs/pt-BR/firmware-ts35.md](docs/pt-BR/firmware-ts35.md).
 

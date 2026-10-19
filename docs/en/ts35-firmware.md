@@ -133,9 +133,10 @@ Home, zero, unlock and reset require **two taps** within 3 seconds.
 
 ## Touch calibration (important)
 
-The build ships with `controls_enabled: false`: the panel shows state and DRO,
-but **does not run jog, zero, homing or reset**. This is deliberate, because a
-mis-calibrated tap could press the wrong button.
+The shipped configs set `controls_enabled: true` with **JOG, ZERO, UNLOCK and
+CLEAR ALARM** enabled. **HOME** and **soft reset** stay disabled on purpose.
+Before trusting the panel to move the machine, confirm that a tap lands on the
+button you intended; a mis-calibrated touch can trigger a neighbouring button.
 
 1. On the panel, tap the **INFO** tab.
 2. Tap the four corners of the usable area and note the **raw X/Y** values shown
@@ -160,11 +161,13 @@ mis-calibrated tap could press the wrong button.
      touch_invert_y: true/false
    ```
 
-5. Only after confirming that a tap lands on the intended button, set:
+5. If a tap lands on the wrong button, set `controls_enabled: false` (read-only)
+   and repeat the calibration until it lands correctly; then set it back to
+   `true`:
 
    ```yaml
    ts35:
-     controls_enabled: true
+     controls_enabled: true   # false = read-only panel
    ```
 
 6. To allow homing, unlock and reset from the panel:
@@ -190,6 +193,15 @@ mis-calibrated tap could press the wrong button.
   check `touch_x_min/max`, `touch_y_min/max`.
 - **Panel works but touch is offset:** recalibrate using the raw values from the
   INFO page.
+- **Machine boots in Alarm and `$X` does not clear it:** a limit switch is
+  asserted at power-on. FluidNC latches `State::Critical` for a hard limit and
+  `$X` only clears `State::Alarm`, so send a soft reset (Ctrl-X). If the switch
+  is still pressed the alarm returns, so first move that axis off the switch by
+  hand (steppers are disabled in Critical). After homing, the pull-off leaves
+  the machine off the switches, so this only happens if you park it on one.
+- **"Ambiguous switch" during homing:** caused by `limit_all_pin`, which puts
+  the same bit in both limit masks. Use `limit_neg_pin` / `limit_pos_pin` per
+  axis, as in the shipped configs.
 
 ## Limitation: SD card
 

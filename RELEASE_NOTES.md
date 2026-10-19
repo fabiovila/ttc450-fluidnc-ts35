@@ -26,7 +26,12 @@ touch), as shipped in the **TwoTrees TTC450**.
   with `$Config/Filename=...` + `$Bye` — **no reflash, WiFi preserved**.
 - TS35 panel support: DRO, JOG, ZERO, CTRL and INFO pages.
 - Preloaded CNC and laser TS35 configs in LittleFS.
-- Touch panel starts **read-only** (`controls_enabled: false`) until calibrated.
+- Panel ships with **JOG, ZERO, UNLOCK and CLEAR ALARM** enabled; HOME and soft
+  reset stay disabled. Set `controls_enabled: false` if the touch is off.
+- Limit switches are **hard limits**: the machine stops when a switch is hit
+  (`hard_limits: true`, `limit_neg_pin` / `limit_pos_pin`). If a switch is
+  pressed at power-on, FluidNC latches `Critical`; move the axis off it and
+  soft-reset (Ctrl-X).
 
 ## Flashing
 
@@ -71,8 +76,13 @@ ADS7843E), a combinação que vem na **TwoTrees TTC450**.
   preservado**.
 - Suporte à tela TS35: páginas DRO, JOG, ZERO, CTRL e INFO.
 - Configs de CNC e laser com TS35 já gravadas no LittleFS.
-- A tela inicia em **modo somente leitura** (`controls_enabled: false`) até ser
-  calibrada.
+- A tela já vem com **JOG, ZERO, UNLOCK e CLEAR ALARM** liberados; HOME e soft
+  reset seguem desligados. Use `controls_enabled: false` se o toque estiver
+  deslocado.
+- Os fins de curso são **hard limits**: a máquina para ao acionar um switch
+  (`hard_limits: true`, `limit_neg_pin` / `limit_pos_pin`). Se um switch estiver
+  pressionado no boot, o FluidNC entra em `Critical`; afaste o eixo e faça soft
+  reset (Ctrl-X).
 
 ## Gravação
 

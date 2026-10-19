@@ -45,8 +45,9 @@ um módulo `ts35`:
 - Só funciona se a tela for exatamente **TS35-R V2.0 (ST7796 + ADS7843E)**.
 
 Este repositório traz um **firmware já compilado** para essa combinação exata —
-veja [Firmware TS35, gravação e touch](firmware-ts35.md). A tela inicia em modo
-somente leitura (`controls_enabled: false`) até o touch ser calibrado.
+veja [Firmware TS35, gravação e touch](firmware-ts35.md). Os configs liberam
+JOG, ZERO, UNLOCK e CLEAR ALARM na tela, mas mantêm HOME e soft reset
+desligados; se o toque estiver descalibrado, use `controls_enabled: false`.
 
 Para identificar uma tela, abra a caixa de controle e veja a etiqueta/traseira
 do display. Procure "TS35-R V2.0" ou os chips **ST7796** (LCD) e **ADS7843E**

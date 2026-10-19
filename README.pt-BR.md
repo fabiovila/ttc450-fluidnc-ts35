@@ -89,9 +89,10 @@ Primeiro boot:
    $Bye
    ```
 
-4. A tela inicia em **modo somente leitura** (`controls_enabled: false`). Vá
-   na página **INFO**, leia os valores raw do touch e calibre antes de
-   habilitar os controles. Procedimento completo:
+4. Os configs do build liberam **JOG, ZERO, UNLOCK e CLEAR ALARM** na tela
+   (`controls_enabled: true`), mas mantêm **HOME** e **soft reset** desligados.
+   Confira se o toque cai no botão certo; se estiver deslocado, volte
+   `controls_enabled` para `false` e calibre na página **INFO**. Procedimento:
    [docs/pt-BR/firmware-ts35.md](docs/pt-BR/firmware-ts35.md) ·
    [docs/en/ts35-firmware.md](docs/en/ts35-firmware.md).
 

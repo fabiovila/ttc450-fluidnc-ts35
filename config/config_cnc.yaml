@@ -52,7 +52,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.36:low
+      limit_neg_pin: gpio.36:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:
@@ -76,7 +76,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.35:low
+      limit_neg_pin: gpio.35:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:
@@ -102,7 +102,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.34:low
+      limit_pos_pin: gpio.34:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:

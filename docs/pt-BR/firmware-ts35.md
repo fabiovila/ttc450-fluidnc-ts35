@@ -134,9 +134,10 @@ Home, zero, unlock e reset pedem **dois toques** dentro de 3 segundos.
 
 ## Calibração do touch (importante)
 
-O build vem com `controls_enabled: false`: a tela mostra o estado e o DRO, mas
-**não executa jog, zero, home nem reset**. Isso é de propósito, porque um toque
-descalibrado pode apertar o botão errado.
+Os configs do build usam `controls_enabled: true` com **JOG, ZERO, UNLOCK e
+CLEAR ALARM** liberados. **HOME** e **soft reset** seguem desligados de
+propósito. Antes de confiar que a tela move a máquina, confira se o toque cai
+no botão certo; um touch descalibrado pode acionar o botão vizinho.
 
 1. Na tela, toque na aba **INFO**.
 2. Toque nos quatro cantos da área útil e anote os valores **raw X/Y** que
@@ -161,11 +162,13 @@ descalibrado pode apertar o botão errado.
      touch_invert_y: true/false
    ```
 
-5. Só depois de conferir que o toque cai no botão certo, mude:
+5. Se o toque cair no botão errado, volte `controls_enabled` para `false`
+   (somente leitura) e repita a calibração até acertar; depois volte para
+   `true`:
 
    ```yaml
    ts35:
-     controls_enabled: true
+     controls_enabled: true   # false = painel somente leitura
    ```
 
 6. Se quiser liberar home, unlock e reset pela tela:
@@ -192,6 +195,15 @@ descalibrado pode apertar o botão errado.
   confira `touch_x_min/max`, `touch_y_min/max`.
 - **A tela funciona, mas o toque está deslocado:** recalibre com os valores raw
   da página INFO.
+- **A máquina liga em Alarm e o `$X` não limpa:** há um fim de curso acionado
+  no boot. O FluidNC entra em `State::Critical` para hard limit e o `$X` só
+  limpa `State::Alarm`, então use soft reset (Ctrl-X). Se o switch continuar
+  pressionado o alarme volta, então primeiro afaste o eixo do batente na mão
+  (os motores ficam desenergizados em Critical). Depois do homing o pull-off
+  deixa a máquina fora dos switches; isso só acontece se você estacionar neles.
+- **Erro "Ambiguous switch" no homing:** causado por `limit_all_pin`, que coloca
+  o mesmo bit nas duas máscaras de limite. Use `limit_neg_pin` / `limit_pos_pin`
+  por eixo, como nos configs do repo.
 
 ## Limitação: cartão SD
 

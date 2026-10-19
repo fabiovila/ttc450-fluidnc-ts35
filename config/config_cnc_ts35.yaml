@@ -52,7 +52,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.36:low
+      limit_neg_pin: gpio.36:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:
@@ -76,7 +76,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.35:low
+      limit_neg_pin: gpio.35:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:
@@ -102,7 +102,7 @@ axes:
       seek_scaler: 1.100
       feed_scaler: 1.100
     motor0:
-      limit_all_pin: gpio.34:low
+      limit_pos_pin: gpio.34:low
       hard_limits: true
       pulloff_mm: 1.000
       standard_stepper:
@@ -128,8 +128,9 @@ spi:
 # da DLC32 usa outro SPI (12/13/14/15) e fica desativado nesta configuracao.
 # Use a WebUI/WiFi para enviar arquivos.
 #
-# controls_enabled: false de proposito. Primeiro confira a calibracao do touch
-# na pagina INFO e ajuste touch_x_min/x_max/y_min/y_max. Depois mude para true.
+# Controles liberados (jog/zero/unlock/clear alarm). HOME e soft reset seguem
+# desligados de proposito. Se o toque estiver descalibrado, volte
+# controls_enabled para false e recalibre na pagina INFO (touch_x_min/x_max/y_min/y_max).
 # -----------------------------------------------------------------------------
 ts35:
   tft_cs_pin: gpio.25
@@ -139,13 +140,13 @@ ts35:
   backlight_pin: gpio.5
   backlight_active_low: true
 
-  controls_enabled: false
+  controls_enabled: true
   allow_jog: true
   allow_zero: true
   allow_homing: false
-  allow_unlock: false
+  allow_unlock: true
   allow_soft_reset: false
-  allow_alarm_clear: false
+  allow_alarm_clear: true
 
   report_interval_ms: 200
   render_interval_ms: 200

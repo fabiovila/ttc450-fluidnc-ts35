@@ -46,8 +46,9 @@ Upstream FluidNC has an experimental PR — **#1805** (August 2026) — that add
 - Only works if the panel is exactly **TS35-R V2.0 (ST7796 + ADS7843E)**.
 
 This repository ships a **prebuilt firmware** for that exact combination — see
-[TS35 firmware, flash & touch](ts35-firmware.md). The panel starts in read-only
-mode (`controls_enabled: false`) until the touch is calibrated.
+[TS35 firmware, flash & touch](ts35-firmware.md). The shipped configs enable
+JOG, ZERO, UNLOCK and CLEAR ALARM on the panel, but keep HOME and soft reset
+disabled; if the touch is mis-calibrated, set `controls_enabled: false`.
 
 To identify a panel, open the control box and check the label/back of the
 display. Look for "TS35-R V2.0" or the **ST7796** (LCD) and **ADS7843E**
