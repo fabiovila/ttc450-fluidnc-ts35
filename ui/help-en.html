@@ -1,0 +1,504 @@
+<div class="help-crumb">TTC450 · MKS DLC32 V2.1 · FluidNC + TS35 · web interface manual</div>
+
+<article class="help-section" id="help-intro">
+  <h3>1. Introduction and safety</h3>
+  <p>This is the web interface for the <b>TwoTrees TTC450</b> with an <b>MKS DLC32 V2.1</b> board,
+  <b>FluidNC</b> firmware and a <b>TS35</b> panel. It replaces the stock WebUI, which cannot
+  configure the console WebSocket in this build.</p>
+  <p>The page controls the machine over WiFi, shows live status and lets you send G-code, switch
+  configs, edit settings, manage files and test the laser. Use the <b>EN/PT</b> button in the header
+  to switch language.</p>
+  <div class="help-note red"><b>Laser safety:</b> use goggles rated for the wavelength, exhaust/air
+  assist, a fire extinguisher and supervision. Never leave the laser unattended. The laser stays on
+  until an <code>M5</code>; closing the browser does not turn it off.</div>
+  <div class="help-note red"><b>Tool-change safety:</b> power off the machine before swapping the
+  spindle for the laser module (or vice versa). The laser goes only to the <b>3-pin TTL port</b>
+  (S/V/G); the spindle goes to the <b>2-pin CNC port</b>.</div>
+  <div class="help-note"><b>Network:</b> this page has no authentication. Do not expose it directly
+  to the internet; use it only on the local network.</div>
+</article>
+
+<article class="help-section" id="help-como-funciona">
+  <h3>2. How the page talks to the machine</h3>
+  <p>The board runs a <b>WebSocket</b> on port 80 at <code>ws://192.168.15.77/</code> with the
+  <code>arduino</code> subprotocol. On connect it sends <code>currentID:N</code>; that number is the
+  <b>PAGEID</b> of the session.</p>
+  <ul>
+    <li><b>Live status:</b> <code>&lt;Idle|MPos:...|FS:...&gt;</code> and <code>[GC:...]</code> lines
+      arrive over the WebSocket.</li>
+    <li><b>Commands/G-code:</b> sent via <code>/command?commandText=...&amp;PAGEID=N</code>; the
+      response comes back over the WebSocket.</li>
+    <li><b>Queries:</b> sent via <code>/command?plain=...</code> and return text directly
+      (e.g. <code>$I</code>, <code>$Settings/List</code>, <code>$Config/Dump</code>).</li>
+    <li><b>Laser fallback:</b> the page uploads a <code>.nc</code> file and runs it with
+      <code>$LocalFS/Run=...</code>. This works even if the WebSocket drops.</li>
+  </ul>
+  <div class="help-note"><b>Why the stock WebUI looks dead:</b> it expects an <code>[ESP...]</code> line
+  in <code>$I</code> to discover the WebSocket port; FluidNC does not send it and port 81 stays closed.
+  The stock Terminal/buttons therefore do nothing.</div>
+</article>
+
+<article class="help-section" id="help-conceitos">
+  <h3>3. Fundamental concepts</h3>
+  <h4>G-code and modal state</h4>
+  <p>G-code is the machine command language. Each line changes a <b>modal state</b>: units
+  (G20/G21), distance (G90/G91), coordinate system (G54…G59), motion (G0/G1), spindle/laser
+  (M3/M4/M5), coolant (M7/M8/M9) and so on. The state persists until changed.</p>
+  <h4>Coordinates: machine, work and WCO</h4>
+  <ul>
+    <li><b>MPos</b> — machine position, referenced by homing/limits.</li>
+    <li><b>WPos</b> — position in the work coordinate system (e.g. G54).</li>
+    <li><b>WCO</b> — Work Coordinate Offset: the shift between machine and work.
+      <code>WPos = MPos − WCO</code>.</li>
+    <li><b>DRO</b> — digital readout: the X/Y/Z displays.</li>
+  </ul>
+  <h4>Homing, zero and limits</h4>
+  <p><b>Homing</b> (<code>$H</code>) finds the limit switches and sets the machine reference.
+  <b>Zero</b> (<code>G10 L20 P0 X0</code>) defines the work zero. A <b>limit</b> can be <i>hard</i>
+  (physical switch) or <i>soft</i> (software). In this config hard limits are enabled: the machine
+  stops and enters <b>Alarm</b>; use <code>$X</code>/UNLOCK and jog away from the switch.</p>
+  <h4>Feed, spindle and override</h4>
+  <p><b>Feed</b> is the cutting speed (F, mm/min). <b>Rapid</b> is fast positioning (G0).
+  <b>Spindle</b> is the rotating tool; in laser mode the laser itself is the “spindle”. An
+  <b>override</b> multiplies feed/rapid/spindle in real time without changing the G-code.</p>
+  <h4>Alarm, ConfigAlarm and panic</h4>
+  <p><b>Alarm</b> is an error state (limit, probe, homing). <b>ConfigAlarm</b> is specific: the last
+  boot was a <b>panic</b> and FluidNC came up with the <code>Default (Test Drive)</code> config. In
+  that state G-code is blocked. A clean reboot (<code>$Bye</code> or the Restart button) loads the
+  normal YAML again.</p>
+</article>
+
+<article class="help-section" id="help-glossario">
+  <h3>4. Glossary A–Z</h3>
+  <table>
+    <thead><tr><th>Term</th><th>Meaning</th><th>Where / command</th></tr></thead>
+    <tbody>
+      <tr><td><b>Alarm</b></td><td>Error state that blocks motion/G-code until resolved.</td><td>Status, red; `$X` to clear a simple alarm.</td></tr>
+      <tr><td><b>ConfigAlarm</b></td><td>Previous boot failed (panic); default config loaded; G-code blocked.</td><td>Dashboard; use “Restart” / <code>$Bye</code>.</td></tr>
+      <tr><td><b>Coolant</b></td><td>Cooling/fluid. M7 = mist, M8 = flood, M9 = off.</td><td>CNC → Coolant. On the TTC450 the pins are NO_PIN (not configured).</td></tr>
+      <tr><td><b>DRO</b></td><td>Digital readout: X/Y/Z position displays.</td><td>Dashboard, header and Tablet.</td></tr>
+      <tr><td><b>Feed</b></td><td>Feed/cutting speed in mm/min (or in/min), word <code>F</code>.</td><td>Jog feed, <code>FS</code> status, feed override.</td></tr>
+      <tr><td><b>FS</b></td><td>Status field <code>FS:feed,spindle</code>: current feed and spindle/laser speed.</td><td>Status; Dashboard; diagnostics.</td></tr>
+      <tr><td><b>G0</b></td><td>Rapid move, no cutting.</td><td>G-code, “Go to X0 Y0”.</td></tr>
+      <tr><td><b>G1</b></td><td>Feed move. Also the block required for static laser output.</td><td>Laser: <code>G1 F100 M3 S50</code>.</td></tr>
+      <tr><td><b>G10 L20 P0</b></td><td>Set work zero in the active system (usually G54).</td><td>Zero X/Y/Z/XY/XYZ buttons.</td></tr>
+      <tr><td><b>G20 / G21</b></td><td>Inches / millimeters.</td><td>Modal; unit preference (page converts display).</td></tr>
+      <tr><td><b>G38.2</b></td><td>Probe: lower until the plate is touched and stop.</td><td>CNC → Probe Z.</td></tr>
+      <tr><td><b>G54…G59</b></td><td>Work coordinate systems.</td><td>G54 offset shown on the Dashboard.</td></tr>
+      <tr><td><b>G90 / G91</b></td><td>Absolute / incremental distance.</td><td>Modal; jog uses G91 internally.</td></tr>
+      <tr><td><b>G94</b></td><td>Feed in units per minute.</td><td>Modal.</td></tr>
+      <tr><td><b>Hard limits</b></td><td>Alarm when a physical limit is hit; stops the machine and allows moving away after <code>$X</code>/UNLOCK.</td><td><code>$Grbl/HardLimitsEnable</code>; 1 in this config.</td></tr>
+      <tr><td><b>Homing</b></td><td>Reference the machine on the limit switches.</td><td><code>$H</code>, <code>$HX</code>, <code>$HY</code>, <code>$HZ</code>.</td></tr>
+      <tr><td><b>Idle</b></td><td>Machine stopped, ready for commands.</td><td>Status; <code>State 0 (Idle)</code>.</td></tr>
+      <tr><td><b>Jog</b></td><td>Manual step move, without changing job G-code.</td><td>X±/Y±/Z± buttons; <code>$J=G91 ...</code>.</td></tr>
+      <tr><td><b>LittleFS</b></td><td>Internal ESP32 filesystem; stores configs, macros, web page and G-code.</td><td>Files; <code>$LocalFS/List</code>.</td></tr>
+      <tr><td><b>M3 / M4 / M5</b></td><td>Spindle/laser clockwise/fixed / counter-clockwise or dynamic / off.</td><td>CNC/Laser; <code>M3 S...</code>, <code>M4 S...</code>, <code>M5</code>.</td></tr>
+      <tr><td><b>M7 / M8 / M9</b></td><td>Coolant mist / flood / off.</td><td>CNC → Coolant.</td></tr>
+      <tr><td><b>Macro</b></td><td>Button that runs a block of G-code, a file or a URL.</td><td>Macros tab; <code>/macros.json</code>.</td></tr>
+      <tr><td><b>MDI</b></td><td>Manual Data Input: send one G-code line manually.</td><td>Control → MDI.</td></tr>
+      <tr><td><b>MPos</b></td><td>Machine position.</td><td>Status; Dashboard.</td></tr>
+      <tr><td><b>Offsets</b></td><td>G54…G59, G28/G30, G92, TLO shifts.</td><td><code>$#</code>; Dashboard.</td></tr>
+      <tr><td><b>OTA</b></td><td>Firmware update over WiFi.</td><td>Settings → Firmware → OTA.</td></tr>
+      <tr><td><b>Override</b></td><td>Real-time multiplier for feed, rapid or spindle.</td><td>Control/CNC → Overrides; <code>Ov</code> status.</td></tr>
+      <tr><td><b>PAGEID</b></td><td>WebSocket session number used by <code>commandText</code>.</td><td>Internal; visible in the console.</td></tr>
+      <tr><td><b>Panic</b></td><td>Firmware crash; the next boot uses the default config.</td><td>ConfigAlarm; restart.</td></tr>
+      <tr><td><b>Probe</b></td><td>Touch sensor (plate) used to measure material height.</td><td>CNC → Probe; <code>G38.2</code>; gpio.22.</td></tr>
+      <tr><td><b>PWM</b></td><td>Pulse-width modulation; controls laser power.</td><td><code>pwm_hz</code>; gpio.32.</td></tr>
+      <tr><td><b>Rapid</b></td><td>G0 fast move; has its own override (25/50/100%).</td><td>G0; Overrides → Rapid.</td></tr>
+      <tr><td><b>S</b></td><td>Speed/power word. Laser: 0–1000 (S1000=100%). CNC: 0–12000.</td><td>Laser/CNC; modal <code>S</code>; <code>FS</code>.</td></tr>
+      <tr><td><b>Soft limits</b></td><td>Software travel limits; require homing.</td><td><code>$Grbl/SoftLimitsEnable</code>.</td></tr>
+      <tr><td><b>Soft reset</b></td><td>Controller reset (Ctrl-X); interrupts the job.</td><td>Settings → Advanced.</td></tr>
+      <tr><td><b>Speed map</b></td><td>Map that turns S into real PWM duty.</td><td><code>Laser: speed_map</code>; 0=0%, 1000=100%.</td></tr>
+      <tr><td><b>Spindle</b></td><td>Rotating tool; on the TTC450 the relay only turns it on/off and speed is set on the PSU potentiometer.</td><td>CNC; <code>M3 S12000</code>/<code>M5</code>.</td></tr>
+      <tr><td><b>Steps/mm</b></td><td>Axis resolution: steps per millimeter (800 on the TTC450).</td><td><code>$Grbl/Resolution/X/Y/Z</code>.</td></tr>
+      <tr><td><b>T / Tool</b></td><td>Tool number; T0 in CNC; the laser uses the Laser spindle.</td><td>Modal <code>T</code>.</td></tr>
+      <tr><td><b>TLO</b></td><td>Tool Length Offset.</td><td><code>$#</code> (TLO).</td></tr>
+      <tr><td><b>WCO</b></td><td>Work Coordinate Offset; shift of the work zero.</td><td>Status; Dashboard.</td></tr>
+      <tr><td><b>WPos</b></td><td>Work coordinate position (G54).</td><td>Status; Dashboard.</td></tr>
+      <tr><td><b>$Bye</b></td><td>Restart the controller.</td><td>Settings/Advanced; ConfigAlarm.</td></tr>
+      <tr><td><b>$Config/Dump</b></td><td>Show the effective loaded config.</td><td>Settings → Effective config.</td></tr>
+      <tr><td><b>$Config/Filename</b></td><td>YAML file loaded on the next boot.</td><td>Console/Settings.</td></tr>
+      <tr><td><b>$G</b></td><td>Show modal state (G0/G1, G54, G90, M3/M5, T, F, S).</td><td>Console; Dashboard modal.</td></tr>
+      <tr><td><b>$H / $HX / $HY / $HZ</b></td><td>Homing all or one axis.</td><td>Control/Dashboard.</td></tr>
+      <tr><td><b>$I</b></td><td>Version, machine and WiFi info.</td><td>Console/Settings.</td></tr>
+      <tr><td><b>$J=G91 ...</b></td><td>Incremental jog; used by the X±/Y±/Z± buttons.</td><td>Control → Jog.</td></tr>
+      <tr><td><b>$LocalFS/Run</b></td><td>Run a file from LittleFS.</td><td>Files → Run; laser fallback.</td></tr>
+      <tr><td><b>$Settings/List</b></td><td>List runtime settings <code>$Key=value</code>.</td><td>Settings → FluidNC Settings.</td></tr>
+      <tr><td><b>$X</b></td><td>Clear alarm / unlock.</td><td>Clear Alarm; does not fix ConfigAlarm.</td></tr>
+      <tr><td><b>?</b></td><td>Real-time status request.</td><td>Automatic page polling.</td></tr>
+      <tr><td><b>! / ~</b></td><td>Feed hold / resume.</td><td>Advanced; may drop the connection in this build.</td></tr>
+      <tr><td><b>Ctrl-X</b></td><td>Soft reset.</td><td>Settings → Advanced.</td></tr>
+    </tbody>
+  </table>
+</article>
+
+<article class="help-section" id="help-dashboard">
+  <h3>5. Dashboard</h3>
+  <p>General overview. Fields update over the WebSocket about once per second.</p>
+  <table>
+    <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>X / Y / Z</td><td>Machine position (MPos) in the selected units.</td></tr>
+      <tr><td>Work position</td><td>WPos: position in the G54 work system.</td></tr>
+      <tr><td>WCO</td><td>Work-zero offset.</td></tr>
+      <tr><td>Feed / Spindle</td><td><code>FS:feed,spindle</code>; in laser mode the second value is the applied S.</td></tr>
+      <tr><td>Overrides</td><td>Feed / Rapid / Spindle in %.</td></tr>
+      <tr><td>Limit switches / probe</td><td>Active pins (<code>Pn:</code>): X/Y/Z and probe.</td></tr>
+      <tr><td>Modal</td><td>Current state: G0/G1, G54, G90/G91, M3/M5, T, F, S.</td></tr>
+      <tr><td>Active config</td><td>Loaded YAML (CNC or laser).</td></tr>
+      <tr><td>WiFi / IP / signal</td><td>STA network, IP and strength.</td></tr>
+      <tr><td>LittleFS</td><td>Filesystem used/total space.</td></tr>
+      <tr><td>Quick actions</td><td>Clear Alarm, Homing all/X/Y/Z, Zero XY/Z, M5 (stop laser/spindle), Motors OFF, Refresh all.</td></tr>
+      <tr><td>Red header button</td><td>Laser mode: <b>LASER OFF</b>; CNC mode: <b>SPINDLE OFF</b>. Always sends M5.</td></tr>
+      <tr><td>Machine mode</td><td>Card with the current mode and the <b>CNC mode</b>/<b>Laser mode</b> buttons. Main place to switch; it restarts the controller.</td></tr>
+    </tbody>
+  </table>
+</article>
+
+<article class="help-section" id="help-controle">
+  <h3>6. Control (generic motion)</h3>
+  <p>This tab is <b>mode-independent</b>: it works in both CNC and laser. It has no tool buttons;
+  only motion, coordinates, MDI and feed/rapid overrides.</p>
+  <div class="help-note green">This page is <b>never locked</b> by mode. To drive the tool, use the
+  specific page.</div>
+  <h4>Jog</h4>
+  <p>Moves the machine in steps. <b>Step</b> is the increment (0.1, 1, 10, 100 mm or inches);
+  <b>Feed XY/Z</b> is the speed. Each click sends <code>$J=G91 G21 X1 F800</code> (example).</p>
+  <h4>Zero and coordinates</h4>
+  <p><b>Zero X/Y/Z/XY/XYZ</b> sends <code>G10 L20 P0 ...</code> and sets the work zero.
+  <b>Go to X0 Y0</b> sends <code>G90 G0 X0 Y0</code> (rapid; be careful).</p>
+  <h4>Home and alarms</h4>
+  <p><b>Home</b> = <code>$H</code>; <b>Home X/Y/Z</b> = <code>$HX/$HY/$HZ</code>.
+  <b>Clear Alarm / Unlock</b> = <code>$X</code>. In <b>ConfigAlarm</b>, use Restart, not <code>$X</code>.</p>
+  <h4>MDI</h4>
+  <p>Manual Data Input: type one or more G-code lines and send. Examples:
+  <code>G0 X10 Y10 F500</code>, <code>G10 L20 P0 X0</code>, <code>G1 X20 F300</code>.
+  Commands that look like the other mode ask for confirmation.</p>
+  <h4>Feed and rapid overrides</h4>
+  <p>Feed: −10/+10/−1/+1/reset. Rapid: 25/50/100%. Values appear in <code>Ov:</code>.
+  The spindle override is on the spindle page.</p>
+  <h4>Quick macros</h4>
+  <p>Shows only generic macros (<code>mode: any</code>). Specific macros are on the CNC and Laser pages.</p>
+</article>
+
+<article class="help-section" id="help-cnc">
+  <h3>7. CNC (spindle, coolant, probe)</h3>
+  <p><b>CNC-only page.</b> If the current mode is not CNC, the whole page is <b>locked</b>
+  (content inert) and only the “Switch to CNC” gate button works.</p>
+  <h4>Spindle</h4>
+  <p>In CNC mode gpio.32 goes to the 2-pin port (0–24 V relay). The 500 W spindle only turns on/off;
+  rotation is set on the PSU potentiometer, not by software.</p>
+  <ul>
+    <li><code>M3 S12000</code> — safely closes the relay (100%).</li>
+    <li><code>M3 S6000</code> — 50% PWM; the relay closes above ~12 V.</li>
+    <li><code>M5</code> — turns it off.</li>
+    <li>The 1/5/10/25/50/100% presets scale to 0–12000.</li>
+  </ul>
+  <h4>Diagnostics</h4>
+  <p>The card shows <code>PWM</code> (<code>pwm_hz</code>/pin), speed map, <code>off_on_alarm</code>,
+  hard/soft limits and <code>MaxSpindleSpeed</code>. When the page is locked these fields are unavailable.</p>
+  <h4>Coolant</h4>
+  <p><b>M7</b> mist, <b>M8</b> flood, <b>M9</b> off. On the TTC450 the pins are <code>NO_PIN</code>
+  (not configured).</p>
+  <h4>Spindle override</h4>
+  <p>−10% / +10% / reset; the value appears in <code>Ov:</code>. Feed/rapid are on the Control tab.</p>
+  <h4>Probe</h4>
+  <p>The probe lowers Z with <code>G38.2</code> until it touches the plate on gpio.22. Enter
+  <b>max travel</b>, <b>feed</b>, <b>plate thickness</b> and <b>retract</b>. The page then applies
+  <code>G10 L20 P0 Z&lt;thickness&gt;</code> and retracts.</p>
+  <h4>CNC macros</h4>
+  <p>Shows only macros with <code>mode: cnc</code>. Generic ones are in Control.</p>
+  <div class="help-note">The gate is software protection: it does not change the cable, nor does it
+  block external G-code. The physical tool swap is done with the machine powered off.</div>
+</article>
+
+<article class="help-section" id="help-laser">
+  <h3>8. Laser (M3 fixed / M4 dynamic)</h3>
+  <div class="help-note red"><b>M3 alone is zeroed in FluidNC laser mode.</b> A block
+  <code>M3 S50</code> without a feed move is treated as “laser off” and the firmware applies S0,
+  even though the modal shows M3 S50. LightBurn works because it sends
+  <code>G1/G2/G3 ... S...</code> with the move. The page sends <code>G1 F100 M3 S...</code> —
+  that is why the web test works.</div>
+  <h4>M3 fixed vs M4 dynamic</h4>
+  <p>FluidNC <b>supports M4</b> in laser mode. But M4 does not mean “continuous”:</p>
+  <table>
+    <thead><tr><th>Mode</th><th>What it does</th><th>When to use</th></tr></thead>
+    <tbody>
+      <tr><td><b>M3 fixed</b></td><td>Constant power; PWM stays at the requested S.</td><td>Focus, static test, simple cutting/engraving.</td></tr>
+      <tr><td><b>M4 dynamic</b></td><td>Power proportional to speed; driven by motion (needs G1/G2/G3 with axes). It is zero when stationary.</td><td>Engraving with smooth acceleration (LightBurn).</td></tr>
+    </tbody>
+  </table>
+  <p>Use the <b>M3 fixed / M4 dynamic</b> toggle on the Laser tab. It is saved in the browser.
+  The <b>Pulse</b> in M4 makes a short back-and-forth line in X so the laser actually fires;
+  “Turn on (continuous)” in M4 is blocked because M4 does not emit while stationary. For jobs,
+  prefer M4 in LightBurn/LaserGRBL.</p>
+  <h4>Scale</h4>
+  <table>
+    <thead><tr><th>S</th><th>Power</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>S0</td><td>0%</td><td>Off (the state may still be M3).</td></tr>
+      <tr><td>S10</td><td>1%</td><td>May be below the module threshold.</td></tr>
+      <tr><td>S50</td><td>5%</td><td>Good for the first focus test.</td></tr>
+      <tr><td>S100</td><td>10%</td><td>Recommended if 1/5% does not fire.</td></tr>
+      <tr><td>S500</td><td>50%</td><td>PWM test; measure S-G.</td></tr>
+      <tr><td>S1000</td><td>100%</td><td>Maximum; high risk.</td></tr>
+    </tbody>
+  </table>
+  <h4>Buttons</h4>
+  <ul>
+    <li><b>Pulse</b> — M3: <code>G1 F100 M3 S...</code>, wait and <code>M5</code>.
+      M4: <code>G1 X... F100 M4 S...</code> out and back, then <code>M5</code>.</li>
+    <li><b>Turn on (continuous)</b> — M3: <code>G1 F100 M3 S...</code> and stays on until M5.
+      M4: blocked (M4 needs motion).</li>
+    <li><b>LASER OFF</b> — sends <code>M5</code> immediately and also a fallback file.</li>
+    <li><b>Test 50%</b> — 1 s M3 pulse to measure S/G with a multimeter.</li>
+  </ul>
+  <h4>Diagnostics</h4>
+  <p>The tab shows the effective config: <code>pwm_hz</code> (1500), <code>output_pin</code>
+  (gpio.32), <code>speed_map</code>, <code>tool_num</code> and <code>off_on_alarm</code>.
+  If <code>off_on_alarm</code> is <code>false</code>, an alarm does not cut the laser automatically;
+  use the red button. If the page is locked, the current mode is not laser: use the Dashboard/gate
+  to switch.</p>
+  <div class="help-note"><b>If it does not fire:</b> (1) confirm the machine is <code>Idle</code>, not
+  Alarm/ConfigAlarm; (2) test 10%; (3) check TTL S/V/G, V=12/24 V, G=GND; (4) measure S-G during 50%
+  (expect ~2.5 V average or 5 V PWM); (5) use the checklist on the Laser tab.</div>
+</article>
+
+<article class="help-section" id="help-modos">
+  <h3>9. Modes and interlocks (Dashboard/Control/CNC/Laser)</h3>
+  <p>The TTC450 uses <b>one firmware</b> and <b>two YAMLs</b>. The active mode changes pin
+  <code>gpio.32</code>: in CNC it goes to the spindle relay (2-pin port, 0–24 V); in laser it goes
+  to the TTL port (3-pin, 0–5 V). The physical cable decides which tool is connected.</p>
+  <table>
+    <thead><tr><th>Mode</th><th>Config</th><th>Output</th><th>S</th><th>Use</th></tr></thead>
+    <tbody>
+      <tr><td><b>CNC</b></td><td><code>config_cnc_ts35.yaml</code></td><td>Relay 0–24 V, 2-pin port</td><td>0–12000 (S12000 = relay closed)</td><td>500 W spindle</td></tr>
+      <tr><td><b>Laser</b></td><td><code>config_laser_ts35.yaml</code></td><td>PWM 0–5 V, TTL port</td><td>0–1000 (S1000 = 100%)</td><td>Laser module</td></tr>
+    </tbody>
+  </table>
+  <h4>Three tabs, fixed roles</h4>
+  <table>
+    <thead><tr><th>Tab</th><th>Content</th><th>Lock</th></tr></thead>
+    <tbody>
+      <tr><td><b>Control</b></td><td>jog, zero, home, MDI, feed/rapid overrides, generic macros</td><td>Never; works in both modes</td></tr>
+      <tr><td><b>CNC</b></td><td>spindle, coolant, spindle override, probe, CNC macros, diagnostics</td><td>Whole page locked in laser mode (gate)</td></tr>
+      <tr><td><b>Laser</b></td><td>power, M3/M4, pulse, continuous, OFF, diagnostics, laser macros</td><td>Whole page locked in CNC mode (gate)</td></tr>
+    </tbody>
+  </table>
+  <h4>The gate (lock)</h4>
+  <p>When the mode does not match, the CNC or Laser tab content becomes <code>inert</code> (no
+  button/input responds) and a banner shows the current mode with the <b>Switch to CNC/laser</b>
+  button. The gate button and the top M5 stay active.</p>
+  <h4>How to switch</h4>
+  <p>Use the <b>Machine mode</b> card on the Dashboard (or the gate button). It writes
+  <code>$Config/Filename</code> and restarts. You can also use
+  <code>$Config/Filename=...</code> + <code>$Bye</code> in the console.
+  <b>Power off the machine</b> before swapping the spindle cable for the laser (or vice versa).</p>
+  <h4>Other protections</h4>
+  <ul>
+    <li><b>Macros:</b> each macro has a <b>Mode</b> field (any/laser/CNC); macros of the other mode
+      are disabled on the Macros page and blocked on execution.</li>
+    <li><b>Files:</b> running a <code>.nc</code> with “laser” in the name in CNC mode (or
+      “cnc/spindle” in laser mode) shows a warning first.</li>
+    <li><b>Console/MDI:</b> commands that look like the wrong mode ask for confirmation.</li>
+    <li><b>M5</b> is always allowed: it is the spindle/laser safety stop.</li>
+  </ul>
+  <div class="help-note red">The lock is software protection. It does <b>not</b> change the cable or
+  block external G-code (LightBurn). The physical swap is your responsibility.</div>
+</article>
+
+<article class="help-section" id="help-arquivos">
+  <h3>10. Files</h3>
+  <p>Manages the board's <b>LittleFS</b>. The SD card is disabled in this TS35 build.</p>
+  <table>
+    <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Refresh</td><td>Re-reads the current folder.</td></tr>
+      <tr><td>Send</td><td>Upload one or more files to the current folder.</td></tr>
+      <tr><td>View</td><td>Opens text files (YAML, NC, JSON) in the browser.</td></tr>
+      <tr><td>Download</td><td>Downloads the file.</td></tr>
+      <tr><td>Rename / Delete</td><td>Renames or deletes (configs, macros and UI are protected).</td></tr>
+      <tr><td>Run</td><td>Runs <code>$LocalFS/Run=file.nc</code>.</td></tr>
+      <tr><td>Use</td><td>Sets the YAML as <code>$Config/Filename</code> and restarts.</td></tr>
+      <tr><td>New folder</td><td>Creates a directory.</td></tr>
+    </tbody>
+  </table>
+  <p>Protected from deletion: <code>index.html.gz</code>, <code>favicon.ico</code>,
+  <code>config*.yaml</code>, <code>macros.json</code>.</p>
+</article>
+
+<article class="help-section" id="help-config">
+  <h3>11. Settings</h3>
+  <h4>FluidNC Settings</h4>
+  <p>Lists <code>$Settings/List</code>, grouped by prefix (Grbl, WiFi, Sta, AP, HTTP, Telnet, etc.).
+  Edit a value and click <b>Save</b>. Some items require a reboot. Passwords are masked; leave blank
+  to keep them.</p>
+  <h4>WiFi</h4>
+  <p>Shows <code>$WiFi/Status</code> and lets you change SSID, password, mode
+  (<code>STA</code>, <code>AP</code>, <code>STA&gt;AP</code>) and hostname. Save restarts the
+  controller. WiFi is stored in NVS, not in the YAML.</p>
+  <h4>Effective config</h4>
+  <p>Shows <code>$Config/Dump</code> (the YAML actually loaded) and lets you download it. Use it to
+  check <code>Laser:</code>, <code>PWM:</code>, pins and limits.</p>
+  <h4>Firmware / OTA</h4>
+  <p>Shows <code>$Firmware/Info</code>. OTA writes a <code>.bin</code> and restarts; do not power off
+  during flashing. Use the correct image for DLC32 V2.1/8 MB.</p>
+  <h4>Reports and preferences</h4>
+  <p><b>Reports</b> sets <code>$Report/Interval</code> (0 disables; 1000 ms default).
+  <b>Preferences</b> changes units (mm/in), theme, poll interval, verbose and autoscroll. They are
+  stored in the browser (localStorage).</p>
+</article>
+
+<article class="help-section" id="help-console">
+  <h3>12. Console</h3>
+  <p>Sends <code>$</code> commands and G-code. Commands go over the WebSocket
+  (<code>commandText</code> + PAGEID); if the WS drops, the page tries <code>plain</code> for queries,
+  but G-code needs the WS.</p>
+  <p>Shortcuts: <code>$I</code>, <code>$G</code>, <code>$#</code>, <code>$State</code>,
+  <code>$X</code>, <code>$H</code>, <code>$Settings/List</code>, <code>$Config/Dump</code>,
+  <code>$WiFi/Status</code>.</p>
+  <p><b>Verbose</b> shows <code>&lt;...&gt;</code> status lines; <b>Autoscroll</b> follows the end;
+  <b>Filter</b> hides lines that do not contain the text.</p>
+</article>
+
+<article class="help-section" id="help-macros">
+  <h3>13. Macros</h3>
+  <p>Each macro has a name, icon, color, type, mode and confirmation flag:</p>
+  <ul>
+    <li><b>G-code</b> — runs the lines (e.g. <code>M5</code>).</li>
+    <li><b>File</b> — runs <code>$LocalFS/Run=value</code>.</li>
+    <li><b>URL</b> — opens a link.</li>
+  </ul>
+  <p>Macros are saved in <code>/macros.json</code> on LittleFS. The <b>Save to machine</b> button
+  uploads the JSON. If the file does not exist, the page uses defaults.</p>
+  <p>Correct laser macro: <code>G1 F100 M3 S50</code> + <code>G4 P1</code> + <code>M5</code>
+  (do not use <code>M3 S50</code> alone).</p>
+</article>
+
+<article class="help-section" id="help-camera-tablet">
+  <h3>14. Camera and Tablet</h3>
+  <p><b>Camera:</b> enter an MJPEG/HTTP URL; the image appears in the tab. The camera is optional.</p>
+  <p><b>Tablet:</b> large controls for DRO, jog, STOP, unlock, home and zero. Use <b>Fullscreen</b>
+  to fill the display.</p>
+</article>
+
+<article class="help-section" id="help-troubleshooting">
+  <h3>15. Troubleshooting</h3>
+  <h4>The laser does not fire from the web</h4>
+  <ol>
+    <li>Confirm <code>Idle</code>; in <b>ConfigAlarm</b> or <b>Alarm</b> G-code is blocked. Restart
+      (ConfigAlarm) or use <code>$X</code> (simple alarm).</li>
+    <li>Test <b>10%</b>; 1% may be below the module threshold.</li>
+    <li>Use <b>Pulse</b> (the page sends <code>G1 F100 M3 S...</code>) — do not use
+      <code>M3 S...</code> alone.</li>
+    <li>Check TTL: S (PWM), V (12/24 V), G (GND), module powered and interlock.</li>
+    <li>Measure S-G during the 50% test: ~2.5 V average or 5 V PWM. If 0 V, signal/config problem;
+      if 5 V and no light, module/power.</li>
+    <li>If LightBurn works and the web does not, it was the standalone <code>M3</code> block —
+      use the pulse/file <code>G1</code>.</li>
+  </ol>
+  <h4>M4 does not fire while stationary</h4>
+  <p>M4 is <b>dynamic power</b>, not “continuous”. Stationary it is zero. Use M3 for a static test or
+  the <b>M4 Pulse</b> (which makes a short line in X) / G-code with motion.</p>
+  <h4>CNC (or Laser) page is locked</h4>
+  <p>The page content is <code>inert</code> when the mode does not match: no button/input responds.
+  The gate shows the current mode and the <b>Switch to CNC/laser</b> button. The lock is software
+  only; it does not change the cable.</p>
+  <h4>ConfigAlarm / “Default (Test Drive)”</h4>
+  <p>The previous boot was a panic. FluidNC does not load the YAML and enters ConfigAlarm. Click
+  <b>Restart now</b> in the banner or send <code>$Bye</code>. The YAML is not broken; the files are
+  intact.</p>
+  <h4>WebSocket offline</h4>
+  <p>The red banner appears; the page reconnects every 2.5 s. <code>$</code> queries may still work
+  over HTTP; G-code/jog need the WS. The laser has a file fallback.</p>
+  <h4>WiFi dropped</h4>
+  <p>Check the 2.4 GHz network, the IP on the router and <code>fluidnc.local</code>. In
+  <code>STA&gt;AP</code>, if the network fails the board starts the <code>FluidNC</code> AP
+  (password <code>12345678</code>, IP <code>192.168.0.1</code>).</p>
+  <h4>Limit alarm / machine does not move</h4>
+  <p>Check the limit switch, use <code>$X</code>/UNLOCK, jog away from the switch, then use
+  <code>$H</code>. In this config <code>hard_limits</code> is on (recoverable stop);
+  “Ambiguous switch” means the limit mapping is wrong.</p>
+  <h4>Z drops when stopped</h4>
+  <p><code>idle_ms</code> is 255 ms to hold Z; “Motors OFF” disables the drivers and Z may drop.</p>
+  <h4>Upload/file fails</h4>
+  <p>Check LittleFS free space and the file name. Configs/UI/macros are protected from deletion. The
+  SD card is not available in this build.</p>
+</article>
+
+<article class="help-section" id="help-comandos">
+  <h3>16. Commands and G-code</h3>
+  <table>
+    <thead><tr><th>Command</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td><code>$I</code></td><td>Version, machine, WiFi/IP.</td></tr>
+      <tr><td><code>$G</code></td><td>Modal state (G0/G1, G54, G90, M3/M5, T, F, S).</td></tr>
+      <tr><td><code>?</code></td><td>Real-time status (over WS).</td></tr>
+      <tr><td><code>$#</code></td><td>G54…G59, G28/G30, G92, TLO offsets.</td></tr>
+      <tr><td><code>$State</code></td><td>Current state (Idle, Alarm, ConfigAlarm…).</td></tr>
+      <tr><td><code>$X</code></td><td>Clear alarm/unlock.</td></tr>
+      <tr><td><code>$H</code> / <code>$HX</code> / <code>$HY</code> / <code>$HZ</code></td><td>Homing all or one axis.</td></tr>
+      <tr><td><code>$J=G91 G21 X10 F500</code></td><td>Incremental jog X.</td></tr>
+      <tr><td><code>$SLP</code></td><td>Sleep mode.</td></tr>
+      <tr><td><code>$C</code></td><td>Check mode (if allowed).</td></tr>
+      <tr><td><code>$Config/Filename=file.yaml</code></td><td>Set the YAML for the next boot.</td></tr>
+      <tr><td><code>$Config/Dump</code></td><td>Show the effective config.</td></tr>
+      <tr><td><code>$Settings/List</code></td><td>List settings <code>$Key=value</code>.</td></tr>
+      <tr><td><code>$LocalFS/List</code></td><td>List LittleFS files.</td></tr>
+      <tr><td><code>$LocalFS/Run=file.nc</code></td><td>Run a file.</td></tr>
+      <tr><td><code>$WiFi/Status</code></td><td>Network details.</td></tr>
+      <tr><td><code>$Firmware/Info</code></td><td>Version/build/webcommunication.</td></tr>
+      <tr><td><code>$Bye</code></td><td>Restart the controller.</td></tr>
+      <tr><td><code>M3 S...</code></td><td>Turn spindle/laser on at fixed power (laser: use with <code>G1</code>).</td></tr>
+      <tr><td><code>M4 S...</code></td><td>Laser dynamic mode; needs real motion (<code>G1 ... M4 S...</code>).</td></tr>
+      <tr><td><code>G1 X.. F.. M4 S..</code></td><td>Motion with dynamic M4 power (LightBurn).</td></tr>
+      <tr><td><code>M5</code></td><td>Turn spindle/laser off.</td></tr>
+      <tr><td><code>M7/M8/M9</code></td><td>Coolant mist/flood/off.</td></tr>
+      <tr><td><code>G0 X.. Y..</code></td><td>Rapid.</td></tr>
+      <tr><td><code>G1 X.. Y.. F..</code></td><td>Feed/cut.</td></tr>
+      <tr><td><code>G1 F100 M3 S50</code></td><td>Static laser at 5% (feed block).</td></tr>
+      <tr><td><code>G4 P1</code></td><td>Dwell 1 s.</td></tr>
+      <tr><td><code>G10 L20 P0 X0</code></td><td>Work zero in G54.</td></tr>
+      <tr><td><code>G38.2 Z-20 F100</code></td><td>Probe down.</td></tr>
+      <tr><td><code>G90/G91</code></td><td>Absolute/incremental.</td></tr>
+      <tr><td><code>G20/G21</code></td><td>Inches/millimeters.</td></tr>
+    </tbody>
+  </table>
+  <div class="help-note">Safe laser example from the web:
+  <pre>G1 F100 M3 S50
+G4 P1
+M5</pre>
+  This turns on 5% for 1 s and turns off. The page does this via <code>$LocalFS/Run</code>.</div>
+</article>
+
+<article class="help-section" id="help-faq">
+  <h3>17. FAQ</h3>
+  <h4>Why is there no login?</h4>
+  <p>This FluidNC build has <code>authentication:no</code>. Use it only on the local network.</p>
+  <h4>Why does the laser work in LightBurn but not on the web?</h4>
+  <p>LightBurn sends <code>G1/G2/G3 ... S...</code>; a standalone <code>M3 S...</code> is zeroed in
+  FluidNC laser mode. The page now uses <code>G1 F100 M3 S...</code> via a file. With M4, LightBurn
+  also sends motion; M4 stationary does not fire.</p>
+  <h4>Does it support M4? Is M4 “continuous”? How do I switch?</h4>
+  <p>Yes, M4 is supported. It is <b>dynamic power</b> (proportional to speed) and needs motion;
+  M3 is fixed power. Use the <b>M3 fixed / M4 dynamic</b> toggle on the Laser tab. For jobs, prefer
+  M4 in LightBurn/LaserGRBL.</p>
+  <h4>Why is the CNC (or Laser) page locked?</h4>
+  <p>Each page is exclusive to its mode. In laser mode the CNC page is locked; in CNC mode the
+  Laser page is locked. Use the gate button or the <b>Machine mode</b> card on the Dashboard.</p>
+  <h4>How do I switch between CNC and laser?</h4>
+  <p>Dashboard → <b>Machine mode</b>, or <code>$Config/Filename=...</code> + <code>$Bye</code>.
+  Power off the machine before changing the cable.</p>
+  <h4>Why does 1% not fire?</h4>
+  <p>Many modules have a minimum threshold. Test 5% or 10%.</p>
+  <h4>What is ConfigAlarm?</h4>
+  <p>Fallback after a panic. Restart; the normal YAML returns.</p>
+  <h4>Can I use the TS35 panel and the web at the same time?</h4>
+  <p>Yes, but avoid simultaneous commands. The panel and the web share the same state.</p>
+  <h4>How do I restore the original WebUI?</h4>
+  <p>The backup is in <code>ui/webui-original.html.gz</code>; upload it as
+  <code>index.html.gz</code> and reload. See <code>ui/README.md</code>.</p>
+  <h4>What is PAGEID?</h4>
+  <p>It is the WebSocket session ID; commands are delivered only to the matching session. The page
+  updates it automatically on reconnect.</p>
+</article>

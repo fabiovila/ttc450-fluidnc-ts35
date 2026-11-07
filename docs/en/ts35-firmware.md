@@ -37,6 +37,12 @@ The LittleFS image already contains:
 - `config.yaml` → a copy of the **CNC + TS35** config
 - `config_cnc_ts35.yaml` → CNC/mill + panel
 - `config_laser_ts35.yaml` → laser + panel
+- `index.html.gz` → the custom bilingual WebUI
+- `help-en.html` → English manual for the WebUI
+- `macros.json` and `favicon.ico` → optional UI assets
+
+The custom UI is described in [webui.md](webui.md) and
+[`../ui/README.md`](../../ui/README.md).
 
 On first boot FluidNC uses `config.yaml` (CNC + TS35). To switch to laser:
 
@@ -193,12 +199,10 @@ button you intended; a mis-calibrated touch can trigger a neighbouring button.
   check `touch_x_min/max`, `touch_y_min/max`.
 - **Panel works but touch is offset:** recalibrate using the raw values from the
   INFO page.
-- **Machine boots in Alarm and `$X` does not clear it:** a limit switch is
-  asserted at power-on. FluidNC latches `State::Critical` for a hard limit and
-  `$X` only clears `State::Alarm`, so send a soft reset (Ctrl-X). If the switch
-  is still pressed the alarm returns, so first move that axis off the switch by
-  hand (steppers are disabled in Critical). After homing, the pull-off leaves
-  the machine off the switches, so this only happens if you park it on one.
+- **A hard limit stops the machine, but is recoverable:** the axis stops as
+  soon as the switch triggers, FluidNC enters `State::Alarm`, and `$X` (or the
+  panel's **UNLOCK** / WebUI **Clear alarm**) clears it so you can jog **away**
+  from the switch. `HardStop` / E-stop still requires a deliberate reset.
 - **"Ambiguous switch" during homing:** caused by `limit_all_pin`, which puts
   the same bit in both limit masks. Use `limit_neg_pin` / `limit_pos_pin` per
   axis, as in the shipped configs.

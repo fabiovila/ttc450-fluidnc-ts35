@@ -37,6 +37,12 @@ O LittleFS já contém:
 - `config.yaml` → cópia da config **CNC + TS35**
 - `config_cnc_ts35.yaml` → CNC/fresa + tela
 - `config_laser_ts35.yaml` → laser + tela
+- `index.html.gz` → WebUI própria e bilíngue
+- `help-en.html` → manual em inglês da WebUI
+- `macros.json` e `favicon.ico` → arquivos opcionais da UI
+
+A UI própria está descrita em [interface-web.md](interface-web.md) e
+[`../ui/README.pt-BR.md`](../../ui/README.pt-BR.md).
 
 No primeiro boot, o FluidNC usa `config.yaml` (CNC + TS35). Para trocar para
 laser:
@@ -195,12 +201,10 @@ no botão certo; um touch descalibrado pode acionar o botão vizinho.
   confira `touch_x_min/max`, `touch_y_min/max`.
 - **A tela funciona, mas o toque está deslocado:** recalibre com os valores raw
   da página INFO.
-- **A máquina liga em Alarm e o `$X` não limpa:** há um fim de curso acionado
-  no boot. O FluidNC entra em `State::Critical` para hard limit e o `$X` só
-  limpa `State::Alarm`, então use soft reset (Ctrl-X). Se o switch continuar
-  pressionado o alarme volta, então primeiro afaste o eixo do batente na mão
-  (os motores ficam desenergizados em Critical). Depois do homing o pull-off
-  deixa a máquina fora dos switches; isso só acontece se você estacionar neles.
+- **Um fim de curso para a máquina, mas é recuperável:** o eixo para assim que
+  o switch aciona, o FluidNC entra em `State::Alarm` e o `$X` (ou **UNLOCK** na
+  tela / **Clear alarm** na WebUI) limpa o alarme para você fazer jog **para
+  fora** do switch. `HardStop` / E-stop continua exigindo reset deliberado.
 - **Erro "Ambiguous switch" no homing:** causado por `limit_all_pin`, que coloca
   o mesmo bit nas duas máscaras de limite. Use `limit_neg_pin` / `limit_pos_pin`
   por eixo, como nos configs do repo.

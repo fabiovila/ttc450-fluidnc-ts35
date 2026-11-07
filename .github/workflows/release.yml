@@ -24,6 +24,10 @@ jobs:
         working-directory: firmware/ts35
         run: sha256sum -c SHA256SUMS
 
+      - name: Verify WebUI checksums
+        working-directory: ui
+        run: sha256sum -c SHA256SUMS
+
       - name: Package firmware zip
         run: |
           cd firmware/ts35
@@ -32,11 +36,21 @@ jobs:
             bootloader.bin partitions.bin boot_app0.bin \
             firmware.bin littlefs.bin SHA256SUMS BUILD-INFO.txt README.md
 
+      - name: Package WebUI zip
+        run: |
+          cd ui
+          zip -9 -j "$GITHUB_WORKSPACE/ttc450-webui.zip" \
+            index.html.gz help-en.html macros.json favicon.ico \
+            webui-original.html.gz README.md README.pt-BR.md \
+            COMECE-AQUI.txt SHA256SUMS
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: RELEASE_NOTES.md
           files: |
             ttc450-ts35-firmware.zip
+            ttc450-webui.zip
             firmware/ts35/ttc450-ts35-8mb.bin
             firmware/ts35/ttc450-ts35-4mb.bin
             firmware/ts35/firmware.bin

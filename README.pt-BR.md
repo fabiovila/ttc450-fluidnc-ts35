@@ -45,6 +45,10 @@ entregando um firmware já compilado que inclui o módulo de tela `ts35`.
 - **Firmware já compilado** para DLC32 V2.1 + TS35-R V2.0 — sem precisar
   montar toolchain: `firmware/ts35/ttc450-ts35-8mb.bin` (MKS Laser Tool) e
   `ttc450-ts35-4mb.bin` (esptool). Veja [`firmware/ts35`](firmware/ts35/).
+- **WebUI própria e bilíngue** (PT/EN) já gravada no LittleFS, com dashboard,
+  jog, páginas CNC/laser, arquivos, configurações, macros e manual de 17
+  seções. Usa o WebSocket do FluidNC na porta 80. Veja [`ui/`](ui/) e
+  [docs/pt-BR/interface-web.md](docs/pt-BR/interface-web.md).
 - **Configs testadas** para CNC e laser, com e sem a tela TS35
   ([`config/`](config/)).
 - **Guia de calibração do touch** (a tela é resistiva; precisa calibrar antes
@@ -95,6 +99,10 @@ Primeiro boot:
    `controls_enabled` para `false` e calibre na página **INFO**. Procedimento:
    [docs/pt-BR/firmware-ts35.md](docs/pt-BR/firmware-ts35.md) ·
    [docs/en/ts35-firmware.md](docs/en/ts35-firmware.md).
+5. Abra `http://<ip-da-máquina>/` (ou `http://fluidnc.local/`) para a WebUI
+   própria e bilíngue. Ela já está no LittleFS; não precisa enviar nada. Veja
+   [docs/pt-BR/interface-web.md](docs/pt-BR/interface-web.md) ·
+   [docs/en/webui.md](docs/en/webui.md).
 
 ## Compatibilidade
 
@@ -117,6 +125,8 @@ nem com placas DLC32 de 4 MB.
   (`gpio.18/19/23`) e o FluidNC expõe uma única seção `spi:`, enquanto o SD da
   DLC32 está em outro barramento (`gpio.12/13/14/15`).
 - A tela é resistiva e **precisa ser calibrada** em cada unidade.
+- A WebUI **não tem autenticação**, como a página original do FluidNC. Mantenha
+  a controladora em rede local confiável.
 - Atualização OTA deve usar somente imagens deste mesmo build; não misture com
   binários do FluidNC oficial.
 - Sem testes automatizados. O PR original foi testado em bancada na mesma
@@ -127,7 +137,8 @@ nem com placas DLC32 de 4 MB.
 | Caminho | Conteúdo |
 |---|---|
 | [`firmware/ts35/`](firmware/ts35/) | Imagens de firmware prontas, checksums, informações de build |
-| [`source/`](source/) | Código do módulo `ts35` + guia de build reproduzível |
+| [`ui/`](ui/) | Fonte, arquivos publicados e guia da WebUI própria e bilíngue |
+| [`source/`](source/) | Código do módulo `ts35`, patches + guia de build reproduzível |
 | [`config/`](config/) | Configs YAML do FluidNC (CNC / laser, com / sem TS35) |
 | [`scripts/`](scripts/) | Scripts de backup, gravação e empacotamento de release |
 | [`docs/en/`](docs/en/) | Documentação em inglês |
@@ -141,6 +152,7 @@ nem com placas DLC32 de 4 MB.
 | Firmware original e o bug do WiFi | [firmware-original.md](docs/pt-BR/firmware-original.md) | [stock-firmware.md](docs/en/stock-firmware.md) |
 | FluidNC na TTC450 | [fluidnc.md](docs/pt-BR/fluidnc.md) | [fluidnc.md](docs/en/fluidnc.md) |
 | Firmware TS35, gravação e touch | [firmware-ts35.md](docs/pt-BR/firmware-ts35.md) | [ts35-firmware.md](docs/en/ts35-firmware.md) |
+| WebUI própria (PT/EN) | [interface-web.md](docs/pt-BR/interface-web.md) | [webui.md](docs/en/webui.md) |
 | Segurança e referências | [seguranca.md](docs/pt-BR/seguranca.md) | [safety.md](docs/en/safety.md) |
 
 ## Créditos

@@ -16,8 +16,8 @@
 - **Backup:** keep the 8 MB dump and the config files. The dump is the only way
   to return to the original firmware with NVS/SPIFFS intact.
 - **TS35 build:** not official. Test first with the motors disconnected and the
-  laser off. The SD card is disabled in this build; touch starts disabled until
-  calibration.
+  laser off. The SD card is disabled in this build; the shipped configs enable
+  the panel controls, so calibrate the touch before trusting JOG/ZERO.
 
 ## References
 

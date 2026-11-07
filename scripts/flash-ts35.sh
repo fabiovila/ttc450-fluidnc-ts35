@@ -13,7 +13,8 @@
 #
 # The file written is the full 4 MB image:
 #   firmware/ts35/ttc450-ts35-4mb.bin
-# It contains bootloader, partition table, app, LittleFS and both configs.
+# It contains bootloader, partition table, app, LittleFS, both configs and the
+# custom WebUI.
 # =============================================================================
 set -euo pipefail
 
@@ -75,9 +76,10 @@ echo "       \$Sta/SSID=YOUR_NETWORK"
 echo "       \$Sta/Password=YOUR_PASSWORD"
 echo "       \$WiFi/Mode=STA>AP"
 echo "       \$Bye"
-echo "  4. Touch starts DISABLED (controls_enabled: false)."
-echo "     Go to the INFO tab, read the raw touch values and calibrate before"
-echo "     setting controls_enabled to true."
+echo "  4. The panel controls are enabled by default. If the touch is off, set"
+echo "     controls_enabled: false and calibrate on the INFO page before trusting"
+echo "     the JOG/ZERO buttons."
+echo "  5. The custom WebUI is already in LittleFS at http://<machine-ip>/."
 echo
 echo "Full instructions: docs/en/ts35-firmware.md"
 echo

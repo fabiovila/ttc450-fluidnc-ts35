@@ -1,0 +1,3134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<title>TTC450 — Controle</title>
+<style>
+  :root{
+    --bg:#0b0f14; --bg2:#111820; --card:#151b23; --card2:#10161d; --line:#26303b; --line2:#303a46;
+    --fg:#e6edf3; --muted:#8b949e; --green:#3fb950; --red:#f85149; --yellow:#d29922;
+    --blue:#58a6ff; --purple:#bc8cff; --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  body.light{
+    --bg:#f3f6fa; --bg2:#e9eef5; --card:#ffffff; --card2:#f7f9fc; --line:#d7dee8; --line2:#c2ccd9;
+    --fg:#18212b; --muted:#5b6b7d; --green:#1a7f37; --red:#cf222e; --yellow:#9a6700;
+    --blue:#0969da; --purple:#8250df; --shadow:0 10px 30px rgba(30,50,80,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1100px 550px at 50% -10%,var(--bg2) 0%,var(--bg) 55%);
+    color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;padding-bottom:30px;
+  }
+  a{color:var(--blue)}
+  .top{
+    position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;
+    padding:10px 16px;background:color-mix(in srgb,var(--bg) 92%,transparent);
+    border-bottom:1px solid var(--line);backdrop-filter:blur(9px);flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--muted);flex:0 0 auto;box-shadow:0 0 0 4px rgba(139,148,158,.13)}
+  .dot.idle{background:var(--green);box-shadow:0 0 0 4px rgba(63,185,80,.15)}
+  .dot.alarm{background:var(--red);box-shadow:0 0 0 4px rgba(248,81,73,.17)}
+  .dot.busy{background:var(--yellow);box-shadow:0 0 0 4px rgba(210,153,34,.17)}
+  h1{font-size:1.08rem;margin:0;letter-spacing:.3px;white-space:nowrap}
+  .hdr-dro{display:flex;gap:12px;align-items:center;flex:1;min-width:240px;flex-wrap:wrap}
+  .hdr-dro .axis{display:flex;align-items:baseline;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:9px;padding:5px 9px}
+  .hdr-dro .axis span{font-size:.68rem;color:var(--muted);font-weight:700}
+  .hdr-dro .axis b{font:600 .95rem ui-monospace,SFMono-Regular,Menlo,monospace;min-width:68px;text-align:right}
+  .hdr-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .panic{
+    background:var(--red);color:#fff;border:0;border-radius:10px;padding:11px 14px;
+    font-weight:800;font-size:.9rem;letter-spacing:.35px;cursor:pointer;min-height:44px;
+    box-shadow:0 4px 18px rgba(248,81,73,.28);white-space:nowrap;
+  }
+  body.laser-on .panic{animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,81,73,.55)}50%{box-shadow:0 0 0 12px rgba(248,81,73,0)}}
+  .nav{
+    position:sticky;top:61px;z-index:25;display:flex;gap:6px;padding:8px 16px;overflow-x:auto;
+    background:color-mix(in srgb,var(--bg) 94%,transparent);border-bottom:1px solid var(--line);
+    scrollbar-width:thin;
+  }
+  .nav button{
+    background:transparent;color:var(--muted);border:1px solid transparent;border-radius:9px;
+    padding:8px 12px;font:inherit;font-weight:650;cursor:pointer;white-space:nowrap;
+  }
+  .nav button:hover{color:var(--fg);background:var(--card)}
+  .nav button.active{color:var(--fg);background:var(--card);border-color:var(--line2)}
+  main{max-width:1400px;margin:16px auto;padding:0 16px}
+  .tab{display:none}
+  .tab.active{display:block}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .card{
+    background:linear-gradient(180deg,var(--card) 0%,var(--card2) 100%);
+    border:1px solid var(--line);border-radius:var(--radius);padding:15px;
+    box-shadow:var(--shadow);margin-bottom:16px;
+  }
+  .card h2{
+    font-size:.76rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    margin:0 0 12px;font-weight:750;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  }
+  .card h2 .muted{font-size:.72rem;letter-spacing:0;text-transform:none;font-weight:400}
+  .card h3{font-size:.9rem;margin:14px 0 8px;color:var(--fg)}
+  .muted{color:var(--muted)}
+  .small{font-size:.8rem}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .right{text-align:right}
+  .banner{
+    margin:12px auto 0;padding:10px 14px;border:1px solid rgba(210,153,34,.45);
+    background:rgba(210,153,34,.09);color:#f0d38a;border-radius:10px;font-size:.86rem;
+  }
+  body.light .banner{color:#7a5b00;background:#fff7e0}
+  .banner.red{border-color:rgba(248,81,73,.5);background:rgba(248,81,73,.09);color:#ff9a92}
+  body.light .banner.red{color:#a40e26;background:#ffebe9}
+  .dro{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+  .dro > div{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+  .dro span{display:block;font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:.08em}
+  .dro b{font:650 1.35rem ui-monospace,SFMono-Regular,Menlo,monospace}
+  .kv{display:flex;justify-content:space-between;gap:14px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.88rem}
+  .kv:last-child{border-bottom:0}
+  .kv span{color:var(--muted);white-space:nowrap}
+  .kv b{font-weight:650;text-align:right;word-break:break-word}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;
+    font-size:.74rem;font-weight:750;border:1px solid var(--line);background:var(--bg);color:var(--muted);
+    white-space:nowrap;
+  }
+  .badge.on{color:#ff7b72;border-color:rgba(248,81,73,.5);background:rgba(248,81,73,.13)}
+  .badge.off{color:#7ee787;border-color:rgba(63,185,80,.45);background:rgba(63,185,80,.1)}
+  body.light .badge.off{color:#1a7f37}
+  .badge.warn{color:#f0d38a;border-color:rgba(210,153,34,.5);background:rgba(210,153,34,.1)}
+  body.light .badge.warn{color:#7a5b00}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px}
+  @media (max-width:560px){.grid,.grid4{grid-template-columns:1fr}.dro{grid-template-columns:1fr 1fr}}
+  .btn{
+    background:var(--card);color:var(--fg);border:1px solid var(--line2);border-radius:10px;
+    padding:11px 13px;font:inherit;font-weight:650;cursor:pointer;min-height:44px;
+    transition:background .15s,border-color .15s,transform .05s;
+  }
+  .btn:hover{background:var(--bg2)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:rgba(63,185,80,.14);border-color:rgba(63,185,80,.55);color:#7ee787}
+  body.light .btn.primary{color:#1a7f37}
+  .btn.blue{background:rgba(88,166,255,.13);border-color:rgba(88,166,255,.5);color:#79c0ff}
+  body.light .btn.blue{color:#0969da}
+  .btn.warn{background:rgba(210,153,34,.12);border-color:rgba(210,153,34,.55);color:#f0d38a}
+  body.light .btn.warn{color:#7a5b00}
+  .btn.danger{background:rgba(248,81,73,.15);border-color:rgba(248,81,73,.6);color:#ff7b72}
+  body.light .btn.danger{color:#cf222e}
+  .btn.tiny{min-height:30px;padding:5px 8px;font-size:.74rem;font-weight:600}
+  .btn.big{min-height:56px;font-size:1.02rem}
+  .btn.giant{min-height:70px;font-size:1.15rem;font-weight:800}
+  .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .row > *{flex:0 0 auto}
+  .row .grow{flex:1 1 180px;min-width:0}
+  input,select,textarea{
+    background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:9px;
+    padding:9px 11px;font:inherit;font-size:.88rem;min-height:40px;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid rgba(88,166,255,.45);outline-offset:0}
+  textarea{min-height:110px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem}
+  input[type=file]{padding:8px;color:var(--muted);font-size:.8rem}
+  input[type=range]{padding:0;min-height:34px;accent-color:var(--red)}
+  label{font-size:.78rem;color:var(--muted);font-weight:650}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field input,.field select{width:100%}
+  .tablewrap{max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:.84rem}
+  th,td{padding:8px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{position:sticky;top:0;background:var(--card);color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;z-index:1}
+  tr:last-child td{border-bottom:0}
+  td.name{white-space:normal;word-break:break-all;font:600 .8rem ui-monospace,SFMono-Regular,Menlo,monospace}
+  .tag{font-size:.64rem;padding:2px 6px;border-radius:999px;background:rgba(63,185,80,.16);color:#7ee787;margin-left:5px;font-weight:750;vertical-align:middle}
+  body.light .tag{color:#1a7f37}
+  .acts{display:flex;gap:5px;justify-content:flex-end;flex-wrap:wrap}
+  .log{
+    background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;
+    max-height:340px;overflow:auto;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .log .ok{color:var(--green)} .log .err{color:var(--red)} .log .warn{color:var(--yellow)}
+  .log .status{color:var(--muted)} .log .msg{color:var(--purple)}
+  .consoleout{max-height:52vh}
+  dialog{
+    background:var(--card);color:var(--fg);border:1px solid var(--line2);border-radius:14px;
+    padding:16px;max-width:920px;width:94vw;max-height:88vh;box-shadow:0 30px 80px rgba(0,0,0,.5);
+  }
+  dialog::backdrop{background:rgba(0,0,0,.68)}
+  dialog h3{margin:0 0 12px;font-size:.98rem;word-break:break-all}
+  dialog pre{
+    background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;
+    max-height:64vh;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    white-space:pre-wrap;word-break:break-word;margin:0 0 12px;
+  }
+  .setting{border-bottom:1px dashed var(--line);padding:9px 0}
+  .setting:last-child{border-bottom:0}
+  .setting .srow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .setting .srow .grow{flex:1 1 220px;min-width:0}
+  .setting .help{font-size:.72rem;color:var(--muted);margin-top:3px}
+  .macro{
+    background:var(--card);border:1px solid var(--line2);border-left:5px solid var(--blue);
+    border-radius:11px;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:84px;
+    cursor:pointer;transition:transform .05s,background .15s;
+  }
+  .macro:hover{background:var(--bg2)}
+  .macro:active{transform:translateY(1px)}
+  .macro .mname{font-weight:750;font-size:.9rem;display:flex;align-items:center;gap:7px}
+  .macro .mtype{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .macro .medit{display:flex;gap:4px;justify-content:flex-end;margin-top:auto}
+  .macro .medit button{background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:.72rem;padding:2px 4px}
+  .macro .medit button:hover{color:var(--fg)}
+  .toast{
+    position:fixed;right:16px;bottom:16px;z-index:100;padding:11px 14px;border-radius:10px;
+    background:var(--card);border:1px solid var(--line2);box-shadow:var(--shadow);
+    font-size:.85rem;max-width:min(420px,90vw);opacity:0;transform:translateY(8px);
+    transition:opacity .2s,transform .2s;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.err{border-color:rgba(248,81,73,.6);color:#ff7b72}
+  .toast.ok{border-color:rgba(63,185,80,.6);color:#7ee787}
+  .connbar{display:none;padding:8px 16px;background:rgba(248,81,73,.12);border-bottom:1px solid rgba(248,81,73,.4);font-size:.82rem}
+  .connbar.show{display:block}
+  .tabletbtn{display:none}
+  body.tablet-mode .nav{display:none}
+  body.tablet-mode .tabletbtn{display:inline-block}
+  .checklist label{display:flex;align-items:flex-start;gap:8px;padding:5px 0;color:var(--fg);font-size:.86rem;font-weight:500;cursor:pointer}
+  .checklist input{min-height:0;margin-top:3px}
+  .pill{display:inline-block;padding:2px 7px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);font-size:.7rem;color:var(--muted)}
+  .footer{max-width:1400px;margin:8px auto 0;padding:0 16px;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:.74rem}
+  .help-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:860px){.help-layout{grid-template-columns:1fr}.help-nav{position:static;max-height:none}}
+  .help-nav{position:sticky;top:118px;max-height:calc(100vh - 138px);overflow:auto;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card2)}
+  .help-nav a{display:block;padding:6px 8px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:.82rem;line-height:1.3}
+  .help-nav a:hover{background:var(--bg2);color:var(--fg)}
+  .help-nav .hgroup{font-size:.67rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:10px 8px 4px;font-weight:750}
+  .help-content{min-width:0}
+  .help-section{scroll-margin-top:130px;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px}
+  .help-section:last-child{border-bottom:0}
+  .help-section h3{font-size:1.05rem;margin:0 0 8px;color:var(--fg)}
+  .help-section h4{font-size:.92rem;margin:14px 0 6px;color:var(--blue)}
+  .help-section p,.help-section li{font-size:.88rem;line-height:1.58}
+  .help-section ul,.help-section ol{padding-left:20px}
+  .help-section table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.82rem}
+  .help-section th,.help-section td{border:1px solid var(--line);padding:7px 9px;vertical-align:top}
+  .help-section th{background:var(--card2);text-align:left;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}
+  .help-section code{background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.82em}
+  .help-section pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:.8rem}
+  .help-help .help-section table{background:transparent}
+  .help-note{border-left:3px solid var(--yellow);background:rgba(213,153,0,.10);padding:8px 10px;border-radius:0 8px 8px 0;font-size:.86rem;margin:8px 0}
+  .help-note.red{border-left-color:var(--red);background:rgba(248,81,73,.10)}
+  .help-note.green{border-left-color:var(--green);background:rgba(63,185,112,.10)}
+  .help-search{width:100%;max-width:420px}
+  .help-crumb{color:var(--muted);font-size:.82rem;margin-bottom:8px}
+  .gated{pointer-events:none;opacity:.45;filter:grayscale(.25);user-select:none}
+  .macro.disabled{opacity:.45;cursor:not-allowed}
+  #cncGate,#laserGate{margin-bottom:14px}
+  @media(max-width:600px){.gatebtn{width:100%;margin-top:8px}}
+  @media print{
+    .top,.nav,.footer,.help-nav,.help-top,.card>h2{display:none!important}
+    .help-layout{grid-template-columns:1fr}
+    .card{box-shadow:none;border:0;padding:0}
+    .tab{display:none!important}#tab-help{display:block!important}
+    .help-section{break-inside:avoid}
+  }
+</style>
+
+</head>
+<body>
+<div class="connbar" id="connbar">Sem WebSocket. Reconectando… comandos de G-code/jog ficam indisponíveis temporariamente.</div>
+<header class="top">
+  <div class="brand">
+    <span class="dot" id="dot"></span>
+    <div>
+      <h1>TTC450</h1>
+      <div class="small muted" data-bind="state">—</div>
+    </div>
+  </div>
+  <div class="hdr-dro">
+    <div class="axis"><span>X</span><b data-bind="x">0.000</b></div>
+    <div class="axis"><span>Y</span><b data-bind="y">0.000</b></div>
+    <div class="axis"><span>Z</span><b data-bind="z">0.000</b></div>
+    <div class="axis"><span>F</span><b data-bind="feed">0</b></div>
+    <div class="axis"><span>S</span><b data-bind="spindle">0</b></div>
+  </div>
+  <div class="hdr-meta">
+    <span class="badge" data-bind="mode">—</span>
+    <span class="badge laser-badge off">LASER —</span>
+    <button class="btn tiny" id="langBtn" data-no-i18n title="Switch language">EN</button>
+    <button class="panic" id="panicBtn" title="M5 imediato">DESLIGAR LASER</button>
+  </div>
+</header>
+
+<nav class="nav" id="nav">
+  <button data-tab="dashboard" class="active">Dashboard</button>
+  <button data-tab="control">Controle</button>
+  <button data-tab="cnc">CNC</button>
+  <button data-tab="laser">Laser</button>
+  <button data-tab="files">Arquivos</button>
+  <button data-tab="settings">Configurações</button>
+  <button data-tab="console">Console</button>
+  <button data-tab="macros">Macros</button>
+  <button data-tab="camera">Câmera</button>
+  <button data-tab="tablet">Tablet</button>
+  <button data-tab="help">Ajuda</button>
+  <button data-tab="about">Sobre</button>
+</nav>
+
+<main>
+  <!-- ============================= DASHBOARD ============================= -->
+  <section id="tab-dashboard" class="tab active">
+    <div class="banner" id="alarmBanner" style="display:none"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Máquina <span class="muted" data-bind="conn">—</span></h2>
+        <div class="dro">
+          <div><span>X</span><b data-bind="x">0.000</b></div>
+          <div><span>Y</span><b data-bind="y">0.000</b></div>
+          <div><span>Z</span><b data-bind="z">0.000</b></div>
+        </div>
+        <div class="kv"><span>Posição de trabalho</span><b data-bind="wpos">—</b></div>
+        <div class="kv"><span>WCO</span><b data-bind="wco">—</b></div>
+        <div class="kv"><span>Feed / Spindle</span><b data-bind="fs">—</b></div>
+        <div class="kv"><span>Overrides</span><b data-bind="ov">—</b></div>
+        <div class="kv"><span>Fins de curso / probe</span><b data-bind="pins">—</b></div>
+        <div class="kv"><span>Modal</span><b data-bind="gc" class="mono small">—</b></div>
+      </div>
+      <div class="card">
+        <h2>Modo e rede</h2>
+        <div class="kv"><span>Config ativa</span><b data-bind="config">—</b></div>
+        <div class="kv"><span>Máquina</span><b data-bind="machine">—</b></div>
+        <div class="kv"><span>Laser / Spindle</span><b data-bind="laserText">—</b></div>
+        <div class="kv"><span>WiFi</span><b data-bind="wifi">—</b></div>
+        <div class="kv"><span>IP / sinal</span><b data-bind="ip">—</b></div>
+        <div class="kv"><span>LittleFS</span><b data-bind="free">—</b></div>
+        <div class="kv"><span>Firmware</span><b data-bind="fw">—</b></div>
+        <div class="kv"><span>Offsets</span><b data-bind="offsets" class="mono small">—</b></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Modo da máquina</h2>
+      <div class="kv"><span>Modo atual</span><b data-bind="mode">—</b></div>
+      <div class="kv"><span>Config</span><b data-bind="config">—</b></div>
+      <div class="grid">
+        <button class="btn" data-action="mode-cnc" data-confirm="Mudar para CNC? Desligue a máquina antes de trocar o cabo.">Modo CNC</button>
+        <button class="btn" data-action="mode-laser" data-confirm="Mudar para laser? Desligue a máquina antes de trocar o cabo.">Modo laser</button>
+      </div>
+      <p class="small muted">A troca reinicia a controladora e não troca o cabo físico. Desligue antes de trocar spindle ↔ laser.</p>
+    </div>
+    <div class="card">
+      <h2>Ações rápidas</h2>
+      <div class="grid4">
+        <button class="btn" data-cmd="$X">Clear Alarm / Destravar ($X)</button>
+        <button class="btn" data-cmd="$H" data-confirm="Homing move os eixos. Continuar?">Homing ($H)</button>
+        <button class="btn" data-cmd="$HX" data-confirm="Homing X?">Home X</button>
+        <button class="btn" data-cmd="$HY" data-confirm="Homing Y?">Home Y</button>
+        <button class="btn" data-cmd="$HZ" data-confirm="Homing Z?">Home Z</button>
+        <button class="btn" data-action="zero-xy">Zero XY</button>
+        <button class="btn" data-action="zero-z">Zero Z</button>
+        <button class="btn danger" data-action="laser-off">M5 (parar laser/spindle)</button>
+        <button class="btn" data-action="motors-off" data-confirm="Desligar motores? O eixo Z pode cair.">Motores OFF</button>
+        <button class="btn blue" data-action="refresh-all">Atualizar tudo</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Últimos eventos <button class="btn tiny" id="clearEvents">Limpar</button></h2>
+      <div class="log" id="dashEvents">—</div>
+    </div>
+  </section>
+
+  <!-- ============================= CONTROLE ============================= -->
+  <section id="tab-control" class="tab">
+    <div class="grid2">
+      <div class="card">
+        <h2>Jog</h2>
+        <div class="row" style="margin-bottom:10px">
+          <div class="field"><label>Passo (<span data-bind="unit">mm</span>)</label>
+            <select id="jogStep"><option>0.1</option><option selected>1</option><option>10</option><option>100</option></select>
+          </div>
+          <div class="field"><label>Feed XY</label><input id="jogFeedXY" type="number" value="800" step="50"></div>
+          <div class="field"><label>Feed Z</label><input id="jogFeedZ" type="number" value="400" step="50"></div>
+        </div>
+        <div class="grid3">
+          <button class="btn big" data-jog="Y+">Y+</button>
+          <button class="btn big" data-jog="Z+">Z+</button>
+          <button class="btn big" data-jog="X-">X−</button>
+          <button class="btn big" data-jog="X+">X+</button>
+          <button class="btn big" data-jog="Y-">Y−</button>
+          <button class="btn big" data-jog="Z-">Z−</button>
+        </div>
+        <p class="small muted">Cada clique move um passo. Use passos pequenos perto dos limites.</p>
+        <div class="grid4" style="margin-top:10px">
+          <button class="btn" data-action="home" data-confirm="Homing move os eixos. Continuar?">Home</button>
+          <button class="btn" data-cmd="$HX" data-confirm="Homing X?">Home X</button>
+          <button class="btn" data-cmd="$HY" data-confirm="Homing Y?">Home Y</button>
+          <button class="btn" data-cmd="$HZ" data-confirm="Homing Z?">Home Z</button>
+          <button class="btn" data-action="unlock">Clear Alarm / Destravar</button>
+          <button class="btn danger" data-action="laser-off">M5 (parar)</button>
+          <button class="btn" data-action="motors-off" data-confirm="Desligar motores? O Z pode cair.">Motores OFF</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Zero e coordenadas</h2>
+        <div class="kv"><span>Posição de trabalho</span><b data-bind="wpos">—</b></div>
+        <div class="kv"><span>WCO</span><b data-bind="wco">—</b></div>
+        <div class="grid4" style="margin-top:10px">
+          <button class="btn" data-action="zero-x">Zero X</button>
+          <button class="btn" data-action="zero-y">Zero Y</button>
+          <button class="btn" data-action="zero-z">Zero Z</button>
+          <button class="btn" data-action="zero-xy">Zero XY</button>
+          <button class="btn" data-action="zero-xyz">Zero XYZ</button>
+          <button class="btn" data-action="go-zero" data-confirm="Ir para X0 Y0?">Ir para X0 Y0</button>
+        </div>
+        <p class="small muted">Zero usa G10 L20 P0 no sistema de coordenadas ativo (normalmente G54).</p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>MDI</h2>
+        <div class="row">
+          <input id="mdiInput" class="grow" placeholder="G0 X10 Y10 F500 / G10 L20 P0 X0">
+          <button class="btn primary" id="mdiSend">Enviar</button>
+        </div>
+        <div class="log small" id="mdiOut" style="margin-top:10px;max-height:160px">—</div>
+      </div>
+      <div class="card">
+        <h2>Overrides de feed e rapid</h2>
+        <div class="kv"><span>Feed / Rapid</span><b data-bind="ov">—</b></div>
+        <h3>Feed</h3>
+        <div class="grid4">
+          <button class="btn" data-ovr="feed-">−10%</button>
+          <button class="btn" data-ovr="feed+">+10%</button>
+          <button class="btn" data-ovr="feed--">−1%</button>
+          <button class="btn" data-ovr="feed++">+1%</button>
+          <button class="btn" data-ovr="feed0">100%</button>
+        </div>
+        <h3>Rapid</h3>
+        <div class="grid4">
+          <button class="btn" data-ovr="rapid25">25%</button>
+          <button class="btn" data-ovr="rapid50">50%</button>
+          <button class="btn" data-ovr="rapid100">100%</button>
+        </div>
+        <p class="small muted">Overrides gerais de movimento.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Macros rápidas</h2>
+      <div class="grid4" id="quickMacros"></div>
+      <p class="small muted">Somente macros genéricas. As específicas ficam nas páginas próprias.</p>
+    </div>
+  </section>
+
+  <!-- ============================= CNC ============================= -->
+  <section id="tab-cnc" class="tab">
+    <div class="banner red" id="cncGate" style="display:none">
+      <b>Página bloqueada.</b> Esta página só funciona no modo CNC. Modo atual:
+      <span class="badge" data-bind="mode">—</span>.
+      <button class="btn tiny" data-action="mode-cnc" style="margin-left:8px">Trocar para CNC</button>
+    </div>
+    <div id="cncContent">
+      <div class="grid2">
+        <div class="card">
+          <h2>Spindle</h2>
+          <div class="kv"><span>Página</span><b>CNC</b></div>
+          <div class="kv"><span>Estado</span><b data-bind="spindleText">—</b></div>
+          <div class="kv"><span>S / FS</span><b data-bind="fs">—</b></div>
+          <div class="row" style="margin-top:10px">
+            <div class="field grow"><label>Potência / S</label>
+              <input id="powerRange" type="range" min="0" max="12000" step="1" value="12000">
+            </div>
+            <div class="field"><label>Valor</label><input id="powerValue" type="number" value="12000" min="0" max="12000"></div>
+          </div>
+          <div class="grid4" style="margin-top:8px">
+            <button class="btn" data-power="1">1%</button>
+            <button class="btn" data-power="5">5%</button>
+            <button class="btn" data-power="10">10%</button>
+            <button class="btn" data-power="25">25%</button>
+            <button class="btn" data-power="50">50%</button>
+            <button class="btn" data-power="100">100%</button>
+          </div>
+          <div class="grid" style="margin-top:10px">
+            <button class="btn primary" data-action="power-on">Ligar (M3)</button>
+            <button class="btn danger" data-action="laser-off">Desligar (M5)</button>
+            <button class="btn" data-cmd="M3 S12000" data-requires="cnc" data-confirm="Ligar spindle em S12000?">Spindle S12000</button>
+            <button class="btn" data-cmd="M3 S6000" data-requires="cnc" data-confirm="Ligar spindle em S6000 (50%)?">Spindle S6000</button>
+          </div>
+          <p class="small muted">O relé fecha acima de ~50% (S6000). A rotação é ajustada no potenciômetro da fonte.</p>
+          <div class="kv"><span>PWM</span><b id="cncPwm">—</b></div>
+          <div class="kv"><span>Speed map</span><b id="cncMap">—</b></div>
+          <div class="kv"><span>off_on_alarm</span><b id="cncOffAlarm">—</b></div>
+          <div class="kv"><span>Hard / Soft limits</span><b id="cncLimits">—</b></div>
+          <div class="kv"><span>MaxSpindleSpeed</span><b id="cncMaxS">—</b></div>
+        </div>
+        <div class="card">
+          <h2>Coolant e override do spindle</h2>
+          <h3>Coolant</h3>
+          <div class="grid4">
+            <button class="btn" data-cmd="M7" data-requires="cnc">Mist (M7)</button>
+            <button class="btn" data-cmd="M8" data-requires="cnc">Flood (M8)</button>
+            <button class="btn" data-cmd="M9">Off (M9)</button>
+          </div>
+          <p class="small muted">Coolant não está configurado na TTC450 (pinos NO_PIN).</p>
+          <h3>Override do spindle</h3>
+          <div class="grid4">
+            <button class="btn" data-ovr="spindle-">−10%</button>
+            <button class="btn" data-ovr="spindle+">+10%</button>
+            <button class="btn" data-ovr="spindle0">100%</button>
+          </div>
+          <div class="kv"><span>Overrides</span><b data-bind="ov">—</b></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Probe (touch plate)</h2>
+          <div class="grid4">
+            <div class="field"><label>Curso máx (mm)</label><input id="probeMax" type="number" value="20" step="1"></div>
+            <div class="field"><label>Feed</label><input id="probeFeed" type="number" value="100" step="10"></div>
+            <div class="field"><label>Espessura placa</label><input id="probeThick" type="number" value="0" step="0.1"></div>
+            <div class="field"><label>Recuo</label><input id="probeRetract" type="number" value="2" step="0.5"></div>
+          </div>
+          <button class="btn warn" id="probeStart" style="margin-top:9px">Probe Z</button>
+          <p class="small muted" id="probeStatus">—</p>
+          <p class="small muted">G38.2 desce o Z até tocar a placa. Confirme que a placa está conectada em gpio.22.</p>
+        </div>
+        <div class="card">
+          <h2>Macros de CNC</h2>
+          <div class="grid4" id="cncMacros"></div>
+          <p class="small muted">Somente macros marcadas como CNC.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Modo</h2>
+        <p class="small muted">Esta página só opera no modo CNC. Troque o modo no Dashboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= LASER ============================= -->
+  <section id="tab-laser" class="tab">
+    <div class="banner red" id="laserGate" style="display:none">
+      <b>Página bloqueada.</b> Esta página só funciona no modo laser. Modo atual:
+      <span class="badge" data-bind="mode">—</span>.
+      <button class="btn tiny" data-action="mode-laser" style="margin-left:8px">Trocar para laser</button>
+    </div>
+    <div id="laserContent">
+      <div class="banner red">
+        Laser: use óculos adequados, exaustão/ar assistido, extintor e supervisão. O laser continua ligado até M5.
+        <b>1% pode ficar abaixo do limiar do módulo</b> — se não acender, teste 5% ou 10%.
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h2>Controle do laser <span class="badge laser-badge off">—</span></h2>
+          <div class="dro">
+            <div><span>Potência</span><b id="laserPct">5.0%</b></div>
+            <div><span>S</span><b id="laserS">50</b></div>
+            <div><span>Estado</span><b id="laserState">M5</b></div>
+          </div>
+          <div class="row">
+            <div class="field grow"><label>Potência (S0–S1000)</label>
+              <input id="laserRange" type="range" min="0" max="1000" step="1" value="50">
+            </div>
+            <div class="field"><label>S</label><input id="laserValue" type="number" min="0" max="1000" value="50"></div>
+            <div class="field"><label>Pulso (s)</label><input id="pulseSeconds" type="number" min="0.2" max="30" step="0.1" value="1"></div>
+          </div>
+          <div class="row" style="margin:8px 0">
+            <span class="small muted">Saída:</span>
+            <button class="btn tiny laser-cmd-btn" data-laser-cmd="M3">M3 fixo</button>
+            <button class="btn tiny laser-cmd-btn" data-laser-cmd="M4">M4 dinâmico</button>
+          </div>
+          <p class="small muted laser-cmd-info">M3 fixo: potência constante; ideal para teste estático. M4 dinâmico: potência proporcional à velocidade; precisa de movimento.</p>
+          <div class="grid4" style="margin-top:8px">
+            <button class="btn" data-laser-power="10">1%</button>
+            <button class="btn" data-laser-power="50">5%</button>
+            <button class="btn" data-laser-power="100">10%</button>
+            <button class="btn" data-laser-power="250">25%</button>
+            <button class="btn" data-laser-power="500">50%</button>
+            <button class="btn" data-laser-power="1000">100%</button>
+          </div>
+          <div class="grid" style="margin-top:10px">
+            <button class="btn primary big" data-laser-action="pulse">Pulso</button>
+            <button class="btn warn big" data-laser-action="on">Ligar contínuo</button>
+            <button class="btn danger big" data-laser-action="off" style="grid-column:1/-1">DESLIGAR LASER (M5)</button>
+          </div>
+          <p class="small muted" id="laserMsg">Pronto.</p>
+          <p class="small muted">O pulso envia <code>G1 F100 M3 S...</code> + <code>M5</code> via <code>$LocalFS/Run</code>. <b>M3 sozinho é zerado no modo laser</b>. 1% pode ficar abaixo do limiar; comece em 5% ou 10%.</p>
+        </div>
+
+        <div class="card">
+          <h2>Diagnóstico do laser</h2>
+          <div class="kv"><span>Config ativa</span><b data-bind="config">—</b></div>
+          <div class="kv"><span>Máquina</span><b data-bind="machine">—</b></div>
+          <div class="kv"><span>LaserMode</span><b id="diagLaserMode">—</b></div>
+          <div class="kv"><span>S máximo</span><b id="diagMaxS">—</b></div>
+          <div class="kv"><span>PWM / pino</span><b id="diagPwm">—</b></div>
+          <div class="kv"><span>Speed map</span><b id="diagMap">—</b></div>
+          <div class="kv"><span>tool_num / off_on_alarm</span><b id="diagTool">—</b></div>
+          <p class="small muted">Troque o modo da máquina no Dashboard.</p>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Checklist físico</h2>
+          <div class="checklist" id="laserChecklist">
+            <label><input type="checkbox" data-check="ttl"> Módulo conectado na porta <b>TTL de 3 pinos</b> (S/V/G).</label>
+            <label><input type="checkbox" data-check="v"> Pino <b>V</b> com 12/24 V e <b>G</b> no GND.</label>
+            <label><input type="checkbox" data-check="power"> Módulo ligado (LED/fan), chave/interlock acionado.</label>
+            <label><input type="checkbox" data-check="focus"> Foco ajustado e material no lugar (para ver a marca).</label>
+            <label><input type="checkbox" data-check="glasses"> Óculos adequados e área segura.</label>
+          </div>
+          <p class="small muted">O checklist fica salvo neste navegador.</p>
+        </div>
+        <div class="card">
+          <h2>Teste de PWM</h2>
+          <p class="small muted">Se não acender nem em 10%, meça a tensão entre <b>S</b> e <b>G</b> durante um teste de 50%.</p>
+          <div class="grid">
+            <button class="btn warn" data-laser-action="pwm50">Teste 50% · 1 s</button>
+            <button class="btn danger" data-laser-action="off">Desligar</button>
+          </div>
+          <p class="small muted">Com 50%, espere ~2,5 V médio (ou PWM 5 V). Se S ficar em 0 V, o problema é sinal/config; se tiver 5 V e o laser não acender, é módulo/alimentação.</p>
+          <div class="kv"><span>Último teste</span><b id="pwmTestResult">—</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Macros de laser</h2>
+        <div class="grid4" id="laserMacros"></div>
+        <p class="small muted">Somente macros marcadas como laser.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= ARQUIVOS ============================= -->
+  <section id="tab-files" class="tab">
+    <div class="card">
+      <h2>LittleFS <span class="muted" id="fsInfo">—</span></h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn" id="fileRefresh">Atualizar</button>
+        <button class="btn" id="fileMkdir">Nova pasta</button>
+        <input type="file" id="fileInput" multiple>
+        <button class="btn primary" id="fileUploadBtn">Enviar</button>
+        <span class="small muted" id="fileMsg"></span>
+      </div>
+      <div class="small muted" id="fileBreadcrumb" style="margin-bottom:8px">/</div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Tamanho</th><th class="right">Ações</th></tr></thead>
+          <tbody id="fileList"></tbody>
+        </table>
+      </div>
+      <p class="small muted">`index.html.gz`, `help-en.html`, `favicon.ico`, configs e `macros.json` são protegidos contra exclusão.</p>
+    </div>
+    <div class="card">
+      <h2>SD card</h2>
+      <pre class="log small" id="sdStatus">—</pre>
+      <p class="small muted">Neste build com TS35 o SD fica desativado; use o LittleFS acima.</p>
+    </div>
+  </section>
+
+  <!-- ============================= CONFIGURAÇÕES ============================= -->
+  <section id="tab-settings" class="tab">
+    <div class="card">
+      <h2>FluidNC Settings <button class="btn tiny" id="settingsRefresh">Atualizar</button></h2>
+      <div class="row" style="margin-bottom:8px">
+        <input id="settingsFilter" class="grow" placeholder="Filtrar por chave (ex.: Laser, WiFi, Grbl)…">
+      </div>
+      <div id="settingsGroups">—</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>WiFi</h2>
+        <pre class="log small" id="wifiStatus" style="max-height:220px">—</pre>
+        <div class="grid" style="margin-top:10px">
+          <div class="field"><label>SSID (STA)</label><input id="wifiSsid" autocomplete="off"></div>
+          <div class="field"><label>Senha (deixe vazio para manter)</label><input id="wifiPass" type="password" autocomplete="new-password"></div>
+          <div class="field"><label>Modo</label>
+            <select id="wifiMode"><option>STA</option><option>AP</option><option selected>STA&gt;AP</option><option>AP&gt;STA</option></select>
+          </div>
+          <div class="field"><label>Hostname</label><input id="wifiHost" autocomplete="off"></div>
+        </div>
+        <div class="grid" style="margin-top:10px">
+          <button class="btn primary" id="wifiSave">Salvar e reiniciar</button>
+          <button class="btn" id="wifiReload">Recarregar</button>
+        </div>
+        <p class="small muted">Salvar grava SSID/senha/modo e reinicia o controlador. O WiFi não fica no YAML.</p>
+      </div>
+
+      <div class="card">
+        <h2>Firmware <button class="btn tiny" id="fwRefresh">Atualizar</button></h2>
+        <pre class="log small" id="fwInfo" style="max-height:220px">—</pre>
+        <div class="grid" style="margin-top:10px">
+          <button class="btn" data-action="restart" data-confirm="Reiniciar o controlador?">Reiniciar FluidNC</button>
+          <button class="btn" data-action="config-dump">Ver config efetiva</button>
+        </div>
+        <h3>OTA (atualizar firmware)</h3>
+        <div class="row">
+          <input type="file" id="otaInput" accept=".bin">
+          <button class="btn danger" id="otaBtn">Enviar firmware</button>
+        </div>
+        <p class="small muted">Use a imagem .bin correta. A placa reinicia sozinha. Não desligue durante a gravação.</p>
+        <p class="small muted" id="otaMsg"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Config efetiva <span class="muted">$Config/Dump</span></h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn" id="configDumpRefresh">Atualizar</button>
+        <button class="btn blue" id="configDumpDownload">Baixar YAML</button>
+      </div>
+      <pre class="log small" id="configDump" style="max-height:420px">—</pre>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Preferências</h2>
+        <div class="grid">
+          <div class="field"><label>Unidades</label><select id="prefUnits"><option value="mm">mm</option><option value="in">polegadas</option></select></div>
+          <div class="field"><label>Tema</label><select id="prefTheme"><option value="dark">escuro</option><option value="light">claro</option></select></div>
+          <div class="field"><label>Atualizar status (ms)</label><select id="prefPoll"><option>500</option><option>1000</option><option selected>2000</option></select></div>
+          <div class="field"><label>Console</label>
+            <select id="prefVerbose"><option value="0">sem status</option><option value="1">verbose (status)</option></select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="checklist"><input type="checkbox" id="prefAutoscroll"> Autoscroll no console</label>
+          <label class="checklist"><input type="checkbox" id="prefConfirm" checked> Confirmar ações perigosas</label>
+        </div>
+        <button class="btn primary" id="prefSave" style="margin-top:10px">Salvar preferências</button>
+      </div>
+
+      <div class="card">
+        <h2>Avançado</h2>
+        <div class="grid">
+          <button class="btn" data-action="restart" data-confirm="Reiniciar o controlador?">Reiniciar ($Bye)</button>
+          <button class="btn" data-action="unlock">Clear Alarm / Destravar ($X)</button>
+          <button class="btn" data-action="soft-reset" data-confirm="Soft reset (Ctrl-X)? Isso interrompe o trabalho.">Soft reset</button>
+          <button class="btn danger" data-action="motors-off" data-confirm="Desligar motores? O Z pode cair.">Motores OFF (M18)</button>
+        </div>
+        <h3>Relatórios de status</h3>
+        <div class="row">
+          <div class="field"><label>Intervalo (ms, 0=off)</label><input id="reportInterval" type="number" min="0" max="5000" value="1000"></div>
+          <button class="btn" id="reportApply">Aplicar</button>
+          <button class="btn" id="reportNow">Status agora</button>
+        </div>
+        <p class="small muted">Sem autenticação nesta build. Não exponha esta página na internet.</p>
+        <div class="kv"><span>Webcommunication</span><b id="diagWebcomm">—</b></div>
+        <div class="kv"><span>Página</span><b>custom UI (index.html.gz)</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= CONSOLE ============================= -->
+  <section id="tab-console" class="tab">
+    <div class="card">
+      <h2>Console <span class="muted">comandos e G-code</span></h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn tiny" id="consoleClear">Limpar</button>
+        <label class="checklist"><input type="checkbox" id="consoleVerbose"> mostrar status</label>
+        <label class="checklist"><input type="checkbox" id="consoleAutoscroll" checked> autoscroll</label>
+        <input id="consoleFilter" class="grow" placeholder="filtrar…">
+      </div>
+      <div class="log consoleout" id="consoleOut">—</div>
+      <div class="row" style="margin-top:10px">
+        <input id="consoleInput" class="grow" placeholder="$I / $G / G0 X10 F500 / M5" autocomplete="off">
+        <button class="btn primary" id="consoleSend">Enviar</button>
+      </div>
+      <div class="grid4" style="margin-top:9px">
+        <button class="btn tiny" data-console="$I">$I</button>
+        <button class="btn tiny" data-console="$G">$G</button>
+        <button class="btn tiny" data-console="$#">$#</button>
+        <button class="btn tiny" data-console="$State">$State</button>
+        <button class="btn tiny" data-console="$X">$X</button>
+        <button class="btn tiny" data-console="$H">$H</button>
+        <button class="btn tiny" data-console="$Settings/List">$Settings/List</button>
+        <button class="btn tiny" data-console="$Config/Dump">$Config/Dump</button>
+        <button class="btn tiny" data-console="$WiFi/Status">$WiFi/Status</button>
+      </div>
+      <p class="small muted">Comandos enviados via WebSocket (PAGEID). Se o WS cair, comandos de G-code não funcionam; comandos `$` podem ser consultados por HTTP.</p>
+    </div>
+  </section>
+
+  <!-- ============================= MACROS ============================= -->
+  <section id="tab-macros" class="tab">
+    <div class="card">
+      <h2>Macros <span class="muted">gravadas em /macros.json</span></h2>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn primary" id="macroAdd">Nova macro</button>
+        <button class="btn" id="macroSaveFile">Salvar na máquina</button>
+        <button class="btn" id="macroReload">Recarregar</button>
+        <span class="small muted" id="macroMsg"></span>
+      </div>
+      <div class="grid4" id="macroList"></div>
+    </div>
+  </section>
+
+  <!-- ============================= CÂMERA ============================= -->
+  <section id="tab-camera" class="tab">
+    <div class="card">
+      <h2>Câmera</h2>
+      <div class="row">
+        <input id="cameraUrl" class="grow" placeholder="http://192.168.15.xx:8080/video">
+        <button class="btn primary" id="cameraSave">Salvar</button>
+        <button class="btn" id="cameraReload">Recarregar</button>
+      </div>
+      <p class="small muted">Use uma URL MJPEG/HTTP. A câmera não é obrigatória.</p>
+      <div id="cameraWrap" style="margin-top:12px;text-align:center">
+        <img id="cameraImg" alt="câmera" style="max-width:100%;border:1px solid var(--line);border-radius:12px;display:none">
+        <p class="small muted" id="cameraMsg">Nenhuma câmera configurada.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= TABLET ============================= -->
+  <section id="tab-tablet" class="tab">
+    <div class="card">
+      <h2>Tablet <span class="muted">controles grandes</span></h2>
+      <div class="dro">
+        <div><span>X</span><b data-bind="x">0.000</b></div>
+        <div><span>Y</span><b data-bind="y">0.000</b></div>
+        <div><span>Z</span><b data-bind="z">0.000</b></div>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <span class="badge" data-bind="state">—</span>
+        <span class="badge laser-badge off">—</span>
+        <button class="btn danger big" data-action="laser-off">PARAR (M5)</button>
+        <button class="btn" id="fullscreenBtn">Tela cheia</button>
+      </div>
+      <div class="grid3">
+        <button class="btn giant" data-jog="Y+">Y+</button>
+        <button class="btn giant" data-jog="Z+">Z+</button>
+        <button class="btn giant" data-jog="X-">X−</button>
+        <button class="btn giant" data-jog="X+">X+</button>
+        <button class="btn giant" data-jog="Y-">Y−</button>
+        <button class="btn giant" data-jog="Z-">Z−</button>
+      </div>
+      <div class="grid4" style="margin-top:10px">
+        <button class="btn" data-action="unlock">Destravar</button>
+        <button class="btn" data-action="home" data-confirm="Homing move os eixos. Continuar?">Home</button>
+        <button class="btn" data-action="refresh-all">Atualizar</button>
+        <button class="btn" data-action="zero-xy">Zero XY</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= AJUDA / MANUAL ============================= -->
+  <section id="tab-help" class="tab">
+    <div class="card">
+      <h2>Manual / Ajuda <span class="muted">wiki da TTC450</span></h2>
+      <div class="row" style="margin-bottom:12px">
+        <input id="helpSearch" class="help-search" placeholder="Pesquisar no manual (ex.: feed, laser, M3, probe)…">
+        <button class="btn tiny" id="helpPrint">Imprimir</button>
+        <span class="small muted" id="helpCount"></span>
+      </div>
+      <div class="help-layout">
+        <aside class="help-nav" id="helpNav">
+          <div class="hgroup">Começando</div>
+          <a href="#help-intro" data-goto="help-intro">Introdução e segurança</a>
+          <a href="#help-como-funciona" data-goto="help-como-funciona">Como a página fala com a máquina</a>
+          <a href="#help-conceitos" data-goto="help-conceitos">Conceitos fundamentais</a>
+          <div class="hgroup">Referência</div>
+          <a href="#help-glossario" data-goto="help-glossario">Glossário A–Z</a>
+          <a href="#help-comandos" data-goto="help-comandos">Comandos e G-code</a>
+          <div class="hgroup">Telas</div>
+          <a href="#help-dashboard" data-goto="help-dashboard">Dashboard</a>
+          <a href="#help-controle" data-goto="help-controle">Controle (movimento)</a>
+          <a href="#help-cnc" data-goto="help-cnc">CNC (spindle/coolant)</a>
+          <a href="#help-laser" data-goto="help-laser">Laser (M3/M4)</a>
+          <a href="#help-modos" data-goto="help-modos">Modos e bloqueios</a>
+          <a href="#help-arquivos" data-goto="help-arquivos">Arquivos</a>
+          <a href="#help-config" data-goto="help-config">Configurações</a>
+          <a href="#help-console" data-goto="help-console">Console</a>
+          <a href="#help-macros" data-goto="help-macros">Macros</a>
+          <a href="#help-camera-tablet" data-goto="help-camera-tablet">Câmera e Tablet</a>
+          <div class="hgroup">Problemas</div>
+          <a href="#help-troubleshooting" data-goto="help-troubleshooting">Solução de problemas</a>
+          <a href="#help-faq" data-goto="help-faq">Perguntas frequentes</a>
+        </aside>
+
+        <div class="help-content" id="helpContent">
+          <div class="help-crumb">TTC450 · MKS DLC32 V2.1 · FluidNC + TS35 · manual da interface web</div>
+
+          <article class="help-section" id="help-intro">
+            <h3>1. Introdução e segurança</h3>
+            <p>Esta é a interface web da <b>TwoTrees TTC450</b> com placa <b>MKS DLC32 V2.1</b>, firmware
+            <b>FluidNC</b> e tela <b>TS35</b>. Ela substitui a WebUI oficial, que nesta build não consegue
+            configurar o WebSocket do console.</p>
+            <p>A página comanda a máquina por WiFi, mostra o estado em tempo real e permite enviar
+            G-code, trocar configs, editar settings, gerenciar arquivos e testar o laser.</p>
+            <div class="help-note red"><b>Segurança — laser:</b> use óculos adequados ao comprimento de onda,
+            exaustão/ar assistido, extintor e supervisão. Nunca deixe o laser ligado sozinho. O laser
+            continua ligado até um <code>M5</code>; fechar o navegador não desliga.</div>
+            <div class="help-note red"><b>Segurança — troca de ferramenta:</b> desligue a máquina antes de
+            trocar o spindle pelo módulo laser (ou vice-versa). O laser vai somente na porta
+            <b>TTL de 3 pinos</b> (S/V/G); o spindle vai na porta <b>CNC de 2 pinos</b>.</div>
+            <div class="help-note"><b>Rede:</b> a página não tem autenticação. Não a exponha diretamente
+            na internet; use somente na rede local.</div>
+          </article>
+
+<article class="help-section" id="help-como-funciona">
+            <h3>2. Como a página fala com a máquina</h3>
+            <p>A placa tem um <b>WebSocket</b> na porta 80, no endereço <code>ws://192.168.15.77/</code>,
+            com o subprotocolo <code>arduino</code>. Ao conectar, ele envia <code>currentID:N</code>.
+            Esse número é o <b>PAGEID</b> da sessão.</p>
+            <ul>
+              <li><b>Status ao vivo:</b> linhas <code>&lt;Idle|MPos:...|FS:...&gt;</code> e
+                <code>[GC:...]</code> chegam pelo WebSocket.</p></li>
+              <li><b>Comandos/G-code:</b> vão por <code>/command?commandText=...&amp;PAGEID=N</code>;
+                a resposta volta pelo WebSocket.</li>
+              <li><b>Consultas:</b> vão por <code>/command?plain=...</code> e retornam o texto direto
+                (ex.: <code>$I</code>, <code>$Settings/List</code>, <code>$Config/Dump</code>).</li>
+              <li><b>Fallback de laser:</b> a página sobe um arquivo <code>.nc</code> e executa com
+                <code>$LocalFS/Run=...</code>. Isso funciona mesmo se o WebSocket cair.</li>
+            </ul>
+            <div class="help-note"><b>Por que a WebUI oficial parece morta?</b> Ela espera uma linha
+            <code>[ESP...]</code> no <code>$I</code> para descobrir a porta do WebSocket; o FluidNC não
+            manda essa linha e a porta 81 fica fechada. Por isso Terminal/botões oficiais não funcionam.</div>
+          </article>
+
+<article class="help-section" id="help-conceitos">
+            <h3>3. Conceitos fundamentais</h3>
+            <h4>G-code e estado modal</h4>
+            <p>G-code é a linguagem de comandos da máquina. Cada linha altera um <b>estado modal</b>:
+            unidades (G20/G21), distância (G90/G91), sistema de coordenadas (G54…G59), movimento
+            (G0/G1), spindle/laser (M3/M4/M5), coolant (M7/M8/M9) e assim por diante. O estado
+            continua valendo até ser trocado.</p>
+            <h4>Coordenadas: máquina, trabalho e WCO</h4>
+            <ul>
+              <li><b>MPos</b> — posição da máquina, referenciada pelo homing/limites.</li>
+              <li><b>WPos</b> — posição no sistema de trabalho (ex.: G54).</li>
+              <li><b>WCO</b> — Work Coordinate Offset: deslocamento entre máquina e trabalho.
+                <code>WPos = MPos − WCO</code>.</li>
+              <li><b>DRO</b> — digital readout: os mostradores X/Y/Z da tela.</li>
+            </ul>
+            <h4>Homing, zero e limites</h4>
+            <p><b>Homing</b> (<code>$H</code>) procura os fins de curso e define a referência da máquina.
+            <b>Zero</b> (<code>G10 L20 P0 X0</code>) define onde está o zero do trabalho. <b>Limite</b>
+            pode ser <i>hard</i> (fim de curso físico) ou <i>soft</i> (por software). Nesta config os
+            hard limits estão ligados: a máquina para e entra em <b>Alarm</b>; use
+            <code>$X</code>/UNLOCK e faça jog para fora do switch.</p>
+            <h4>Feed, spindle e override</h4>
+            <p><b>Feed</b> é a velocidade de corte (F, mm/min). <b>Rapid</b> é deslocamento rápido (G0).
+            <b>Spindle</b> é a ferramenta rotativa; no laser, o “spindle” é o próprio laser. O
+            <b>override</b> multiplica feed/rapid/spindle em tempo real, sem mudar o G-code.</p>
+            <h4>Alarme, ConfigAlarm e panic</h4>
+            <p><b>Alarm</b> é um estado de erro (ex.: limite, probe, homing). <b>ConfigAlarm</b> é
+            específico: o último boot foi um <b>panic</b> e o FluidNC subiu com a config
+            <code>Default (Test Drive)</code>. Nesse estado o G-code é bloqueado. Um reboot limpo
+            (<code>$Bye</code> ou botão Reiniciar) volta a carregar o YAML normal.</p>
+          </article>
+
+<article class="help-section" id="help-glossario">
+            <h3>4. Glossário A–Z</h3>
+            <table>
+              <thead><tr><th>Termo</th><th>Significado</th><th>Onde aparece / comando</th></tr></thead>
+              <tbody>
+                <tr><td><b>Alarm</b></td><td>Estado de erro que bloqueia movimento/G-code até ser resolvido.</td><td>Status, cor vermelha; `$X` para limpar se for alarme simples.</td></tr>
+                <tr><td><b>ConfigAlarm</b></td><td>Boot anterior falhou (panic); config padrão carregada; G-code bloqueado.</td><td>Dashboard; use “Restart” / <code>$Bye</code>.</td></tr>
+                <tr><td><b>Coolant</b></td><td>Refrigeração/fluido. M7 = névoa, M8 = inundação, M9 = desliga.</td><td>Controle → Coolant. Na TTC450 os pinos estão NO_PIN (não configurado).</td></tr>
+                <tr><td><b>DRO</b></td><td>Digital Readout: mostradores de posição X/Y/Z.</td><td>Dashboard, cabeçalho e Tablet.</td></tr>
+                <tr><td><b>Feed</b></td><td>Velocidade de avanço/corte em mm/min (ou in/min), palavra <code>F</code>.</td><td>Jog feed, status <code>FS</code>, override de feed.</td></tr>
+                <tr><td><b>FS</b></td><td>Campo de status <code>FS:feed,spindle</code>: feed atual e velocidade do spindle/laser.</td><td>Status; Dashboard; diagnóstico.</td></tr>
+                <tr><td><b>G0</b></td><td>Movimento rápido (rapid), sem usinar.</td><td>G-code, “Ir para X0 Y0”.</td></tr>
+                <tr><td><b>G1</b></td><td>Movimento de feed (corte). Também é o bloco necessário para o laser estático funcionar.</td><td>Laser: <code>G1 F100 M3 S50</code>.</td></tr>
+                <tr><td><b>G10 L20 P0</b></td><td>Define o zero do trabalho no sistema ativo (normalmente G54).</td><td>Botões Zero X/Y/Z/XY/XYZ.</td></tr>
+                <tr><td><b>G20 / G21</b></td><td>Unidades em polegadas / milímetros.</td><td>Modal; preferências de unidade (a página converte exibição).</td></tr>
+                <tr><td><b>G38.2</b></td><td>Probe: desce até tocar a placa e para.</td><td>Controle → Probe Z.</td></tr>
+                <tr><td><b>G54…G59</b></td><td>Sistemas de coordenadas de trabalho.</td><td>Offset G54 mostrado no Dashboard.</td></tr>
+                <tr><td><b>G90 / G91</b></td><td>Distância absoluta / incremental.</td><td>Modal; jog usa G91 internamente.</td></tr>
+                <tr><td><b>G94</b></td><td>Feed em unidades por minuto.</td><td>Modal.</td></tr>
+                <tr><td><b>Hard limits</b></td><td>Alarme ao acionar fim de curso físico; para a máquina e permite voltar após <code>$X</code>/UNLOCK.</td><td><code>$Grbl/HardLimitsEnable</code>; nesta config = 1.</td></tr>
+                <tr><td><b>Homing</b></td><td>Referenciar a máquina nos fins de curso.</td><td><code>$H</code>, <code>$HX</code>, <code>$HY</code>, <code>$HZ</code>.</td></tr>
+                <tr><td><b>Idle</b></td><td>Máquina parada, pronta para receber comandos.</td><td>Status; <code>State 0 (Idle)</code>.</td></tr>
+                <tr><td><b>Jog</b></td><td>Movimento manual por passo, sem alterar o G-code do trabalho.</td><td>Botões X±/Y±/Z±; <code>$J=G91 ...</code>.</td></tr>
+                <tr><td><b>LittleFS</b></td><td>Sistema de arquivos interno do ESP32; guarda configs, macros, página web e G-code.</td><td>Arquivos; <code>$LocalFS/List</code>.</td></tr>
+                <tr><td><b>M3</b></td><td>Spindle/laser ligado com <b>potência fixa</b> (constante). No laser, use junto com um bloco <code>G1</code>.</td><td>Laser: <code>G1 F100 M3 S50</code>; CNC: <code>M3 S12000</code>.</td></tr>
+                <tr><td><b>M4</b></td><td>Laser com <b>potência dinâmica</b>: proporcional à velocidade. Precisa de movimento (G1/G2/G3 com eixos); parado fica em zero. Não é “contínuo”.</td><td>Toggle M3/M4; LightBurn.</td></tr>
+                <tr><td><b>M5</b></td><td>Desliga spindle/laser. Sempre permitido.</td><td>Botão vermelho, macros.</td></tr>
+                <tr><td><b>Modo CNC / laser</b></td><td>Define qual YAML e qual saída de gpio.32 está ativa: relé do spindle ou TTL do laser.</td><td>Dashboard → Modo da máquina; gate.</td></tr>
+                <tr><td><b>Controle</b></td><td>Aba genérica de movimento: jog, zero, home, MDI, overrides feed/rapid e macros genéricas. Funciona nos dois modos.</td><td>Menu Controle.</td></tr>
+                <tr><td><b>CNC</b></td><td>Aba exclusiva do modo CNC: spindle, coolant, override do spindle, probe, macros CNC e diagnóstico.</td><td>Menu CNC; bloqueada no modo laser.</td></tr>
+                <tr><td><b>Laser</b></td><td>Aba exclusiva do modo laser: potência, M3/M4, pulso, contínuo, OFF, diagnóstico e macros laser.</td><td>Menu Laser; bloqueada no modo CNC.</td></tr>
+                <tr><td><b>Gate / bloqueio</b></td><td>Quando o modo não corresponde, a página inteira fica <code>inert</code>; só o botão de troca e o M5 funcionam.</td><td>Banner da página CNC/Laser.</td></tr>
+                <tr><td><b>M7 / M8 / M9</b></td><td>Coolant névoa / inundação / desligado.</td><td>CNC → Coolant.</td></tr>
+                <tr><td><b>Macro</b></td><td>Botão que executa um bloco de G-code, um arquivo ou uma URL.</td><td>Aba Macros; <code>/macros.json</code>.</td></tr>
+                <tr><td><b>MDI</b></td><td>Manual Data Input: enviar uma linha de G-code manualmente.</td><td>Controle → MDI.</td></tr>
+                <tr><td><b>MPos</b></td><td>Posição da máquina (machine position).</td><td>Status; Dashboard.</td></tr>
+                <tr><td><b>Offsets</b></td><td>Deslocamentos G54…G59, G28/G30, G92, TLO.</td><td><code>$#</code>; Dashboard.</td></tr>
+                <tr><td><b>OTA</b></td><td>Atualização de firmware por WiFi.</td><td>Configurações → Firmware → OTA.</td></tr>
+                <tr><td><b>Override</b></td><td>Multiplicador em tempo real de feed, rapid ou spindle.</td><td>Controle → Overrides; status <code>Ov</code>.</td></tr>
+                <tr><td><b>PAGEID</b></td><td>Número da sessão WebSocket usado no <code>commandText</code>.</td><td>Interno; aparece no console.</td></tr>
+                <tr><td><b>Panic</b></td><td>Crash do firmware; no boot seguinte o FluidNC usa a config padrão.</td><td>ConfigAlarm; reinicie.</td></tr>
+                <tr><td><b>Probe</b></td><td>Sensor de toque (placa) para medir a altura do material.</td><td>Controle → Probe; <code>G38.2</code>; gpio.22.</td></tr>
+                <tr><td><b>PWM</b></td><td>Modulação por largura de pulso; controla a potência do laser.</td><td><code>pwm_hz</code>; <code>output_pin</code> gpio.32.</td></tr>
+                <tr><td><b>Rapid</b></td><td>Deslocamento rápido G0; tem override próprio (25/50/100%).</td><td>G0; Overrides → Rapid.</td></tr>
+                <tr><td><b>S</b></td><td>Palavra de velocidade/potência. Laser: 0–1000 (S1000=100%). CNC: 0–12000.</td><td>Laser/Controle; modal <code>S</code>; status <code>FS</code>.</td></tr>
+                <tr><td><b>Soft limits</b></td><td>Limites por software; exigem homing.</td><td><code>$Grbl/SoftLimitsEnable</code>.</td></tr>
+                <tr><td><b>Soft reset</b></td><td>Reset do controlador (Ctrl-X); interrompe o trabalho.</td><td>Configurações → Avançado.</td></tr>
+                <tr><td><b>Speed map</b></td><td>Mapa que converte S em duty/PWM real.</td><td><code>Laser: speed_map</code>; 0=0%, 1000=100%.</td></tr>
+                <tr><td><b>Spindle</b></td><td>Ferramenta rotativa; na TTC450 o relé liga/desliga e a rotação é ajustada no potenciômetro da fonte.</td><td>Controle; <code>M3 S12000</code>/<code>M5</code>.</td></tr>
+                <tr><td><b>Steps/mm</b></td><td>Resolução do eixo: passos por milímetro (800 na TTC450).</td><td><code>$Grbl/Resolution/X/Y/Z</code>.</td></tr>
+                <tr><td><b>T / Tool</b></td><td>Número da ferramenta; T0 no CNC; laser usa o spindle Laser.</td><td>Modal <code>T</code>.</td></tr>
+                <tr><td><b>TLO</b></td><td>Tool Length Offset: compensação de comprimento da ferramenta.</td><td><code>$#</code> (TLO).</td></tr>
+                <tr><td><b>WCO</b></td><td>Work Coordinate Offset; deslocamento do zero de trabalho.</td><td>Status; Dashboard.</td></tr>
+                <tr><td><b>WPos</b></td><td>Posição no sistema de trabalho (G54).</td><td>Status; Dashboard.</td></tr>
+                <tr><td><b>$Bye</b></td><td>Reinicia o controlador.</td><td>Configurações/Avançado; ConfigAlarm.</td></tr>
+                <tr><td><b>$Config/Dump</b></td><td>Mostra a config efetiva carregada.</td><td>Configurações → Config efetiva.</td></tr>
+                <tr><td><b>$Config/Filename</b></td><td>Arquivo YAML que será carregado no próximo boot.</td><td>Console/Configurações.</td></tr>
+                <tr><td><b>$G</b></td><td>Mostra o estado modal (G0/G1, G54, G90, M3/M5, T, F, S).</td><td>Console; modal do Dashboard.</td></tr>
+                <tr><td><b>$H / $HX / $HY / $HZ</b></td><td>Homing geral ou por eixo.</td><td>Controle/Dashboard.</td></tr>
+                <tr><td><b>$I</b></td><td>Informações de versão, máquina e WiFi.</td><td>Console/Configurações.</td></tr>
+                <tr><td><b>$J=G91 ...</b></td><td>Jog incremental; usado pelos botões X±/Y±/Z±.</td><td>Controle → Jog.</td></tr>
+                <tr><td><b>$LocalFS/Run</b></td><td>Executa um arquivo do LittleFS.</td><td>Arquivos → Rodar; fallback do laser.</td></tr>
+                <tr><td><b>$Settings/List</b></td><td>Lista as configurações de runtime <code>$Chave=valor</code>.</td><td>Configurações → FluidNC Settings.</td></tr>
+                <tr><td><b>$X</b></td><td>Limpa alarme / destrava (unlock).</td><td>Clear Alarm; não resolve ConfigAlarm.</td></tr>
+                <tr><td><b>?</b></td><td>Pedido de status em tempo real.</td><td>Polling automático da página.</td></tr>
+                <tr><td><b>! / ~</b></td><td>Feed hold / resume.</td><td>Avançado; pode derrubar a conexão nesta build.</td></tr>
+                <tr><td><b>Ctrl-X</b></td><td>Soft reset.</td><td>Configurações → Avançado.</td></tr>
+              </tbody>
+            </table>
+          </article>
+
+<article class="help-section" id="help-dashboard">
+            <h3>5. Dashboard</h3>
+            <p>É a visão geral. Os campos se atualizam pelo WebSocket a cada ~1 s.</p>
+            <table>
+              <thead><tr><th>Campo</th><th>O que significa</th></tr></thead>
+              <tbody>
+                <tr><td>X / Y / Z</td><td>Posição da máquina (MPos) nas unidades escolhidas.</td></tr>
+                <tr><td>Posição de trabalho</td><td>WPos: posição no sistema G54.</td></tr>
+                <tr><td>WCO</td><td>Deslocamento do zero de trabalho.</td></tr>
+                <tr><td>Feed / Spindle</td><td><code>FS:feed,spindle</code>; no laser, o segundo valor é o S aplicado.</td></tr>
+                <tr><td>Overrides</td><td>Feed / Rapid / Spindle em %.</td></tr>
+                <tr><td>Fins de curso / probe</td><td>Pinos ativos (<code>Pn:</code>): X/Y/Z e probe.</td></tr>
+                <tr><td>Modal</td><td>Estado atual: G0/G1, G54, G90/G91, M3/M5, T, F, S.</td></tr>
+                <tr><td>Config ativa</td><td>YAML carregado (CNC ou laser).</td></tr>
+                <tr><td>WiFi / IP / sinal</td><td>Rede STA, IP e intensidade.</td></tr>
+                <tr><td>LittleFS</td><td>Espaço usado/total do sistema de arquivos.</td></tr>
+                <tr><td>Ações rápidas</td><td>Clear Alarm, Homing geral/X/Y/Z, Zero XY/Z, M5 (parar laser/spindle), Motores OFF, Atualizar.</td></tr>
+                <tr><td>Botão vermelho do topo</td><td>No modo laser: <b>DESLIGAR LASER</b>; no modo CNC: <b>DESLIGAR SPINDLE</b>. Sempre envia M5.</td></tr>
+                <tr><td>Modo da máquina</td><td>Cartão com o modo atual e os botões <b>Modo CNC</b>/<b>Modo laser</b>. É o lugar principal para trocar; a troca reinicia.</td></tr>
+              </tbody>
+            </table>
+          </article>
+
+<article class="help-section" id="help-controle">
+            <h3>6. Controle (movimento genérico)</h3>
+            <p>Esta aba é <b>independente do modo</b>: funciona nos dois modos. Ela não tem botões
+            de ferramenta; só movimento, coordenadas, MDI e overrides de feed/rapid.</p>
+            <div class="help-note green">Esta página <b>nunca é bloqueada</b> por modo. Para acionar
+            a ferramenta, use a página específica.</div>
+            <h4>Jog</h4>
+            <p>Move a máquina em passos. <b>Passo</b> é o incremento (0.1, 1, 10, 100 mm ou polegadas);
+            <b>Feed XY/Z</b> é a velocidade. Cada clique envia
+            <code>$J=G91 G21 X1 F800</code> (exemplo).</p>
+            <h4>Zero e coordenadas</h4>
+            <p><b>Zero X/Y/Z/XY/XYZ</b> envia <code>G10 L20 P0 ...</code> e define o zero do trabalho.
+            <b>Ir para X0 Y0</b> envia <code>G90 G0 X0 Y0</code> (movimento rápido; cuidado).</p>
+            <h4>Home e alarmes</h4>
+            <p><b>Home</b> = <code>$H</code>; <b>Home X/Y/Z</b> = <code>$HX/$HY/$HZ</code>.
+            <b>Clear Alarm / Destravar</b> = <code>$X</code>. Em <b>ConfigAlarm</b>, use Reiniciar,
+            não <code>$X</code>.</p>
+            <h4>MDI</h4>
+            <p>Manual Data Input: digite uma ou mais linhas de G-code e envie. Exemplos:
+            <code>G0 X10 Y10 F500</code>, <code>G10 L20 P0 X0</code>, <code>G1 X20 F300</code>.
+            Comandos que parecem do outro modo pedem confirmação.</p>
+            <h4>Overrides de feed e rapid</h4>
+            <p>Feed: −10/+10/−1/+1/reset. Rapid: 25/50/100%. Os valores aparecem em <code>Ov:</code>.
+            O override de ferramenta fica na página específica.</p>
+            <h4>Macros rápidas</h4>
+            <p>Mostra somente macros genéricas (<code>mode: any</code>). As específicas ficam nas
+            páginas CNC e Laser.</p>
+          </article>
+
+<article class="help-section" id="help-cnc">
+            <h3>7. CNC (spindle, coolant, probe)</h3>
+            <p>Página <b>exclusiva do modo CNC</b>. Se o modo atual não for CNC, toda a página fica
+            <b>bloqueada</b> (conteúdo inert) e só o botão do gate “Trocar para CNC” funciona.</p>
+            <h4>Spindle</h4>
+            <p>No modo CNC a saída gpio.32 vai para a porta de 2 pinos (0–24 V, relé). O spindle de
+            500 W só liga/desliga; a rotação é ajustada no potenciômetro da fonte, não pelo software.</p>
+            <ul>
+              <li><code>M3 S12000</code> — liga o relé com segurança (100%).</li>
+              <li><code>M3 S6000</code> — 50% de PWM; o relé fecha acima de ~12 V.</li>
+              <li><code>M5</code> — desliga.</li>
+              <li>Os presets 1/5/10/25/50/100% escalam para 0–12000.</li>
+            </ul>
+            <h4>Diagnóstico</h4>
+            <p>O cartão mostra <code>PWM</code> (<code>pwm_hz</code>/pino), speed map,
+            <code>off_on_alarm</code>, hard/soft limits e <code>MaxSpindleSpeed</code>. Quando a
+            página está bloqueada, esses campos ficam indisponíveis.</p>
+            <h4>Coolant</h4>
+            <p><b>M7</b> névoa, <b>M8</b> inundação, <b>M9</b> desliga. Na TTC450 os pinos estão
+            <code>NO_PIN</code> (não configurado).</p>
+            <h4>Override do spindle</h4>
+            <p>−10% / +10% / reset; o valor aparece em <code>Ov:</code>. Feed/rapid ficam na aba
+            Controle.</p>
+            <h4>Probe</h4>
+            <p>O probe desce o Z com <code>G38.2</code> até tocar a placa em gpio.22. Informe
+            <b>curso máximo</b>, <b>feed</b>, <b>espessura da placa</b> e <b>recuo</b>. Em seguida a
+            página aplica <code>G10 L20 P0 Z&lt;espessura&gt;</code> e recua.</p>
+            <h4>Macros de CNC</h4>
+            <p>Mostra somente macros com <code>mode: cnc</code>. As genéricas ficam em Controle.</p>
+            <div class="help-note">O gate é proteção de software: ele não troca o cabo, nem impede
+            um G-code externo. A troca física é feita com a máquina desligada.</div>
+          </article>
+
+<article class="help-section" id="help-laser">
+            <h3>8. Laser (M3 fixo / M4 dinâmico)</h3>
+            <div class="help-note red"><b>M3 sozinho é zerado no modo laser do FluidNC.</b> Um bloco
+            <code>M3 S50</code> sem movimento de feed é tratado como “laser off” e o firmware aplica
+            S0, mesmo mostrando M3 S50 no modal. O LightBurn funciona porque manda
+            <code>G1/G2/G3 ... S...</code> junto. A página envia
+            <code>G1 F100 M3 S...</code> — por isso o teste pela web funciona.</div>
+            <h4>M3 fixo × M4 dinâmico</h4>
+            <p>O FluidNC <b>suporta M4</b> no modo laser. Mas M4 não significa “contínuo”:</p>
+            <table>
+              <thead><tr><th>Modo</th><th>O que faz</th><th>Quando usar</th></tr></thead>
+              <tbody>
+                <tr><td><b>M3 fixo</b></td><td>Potência constante; o PWM fica no S pedido.</td><td>Foco, teste estático, corte/gravação simples.</td></tr>
+                <tr><td><b>M4 dinâmico</b></td><td>Potência proporcional à velocidade; o laser é acionado pelo movimento (precisa de G1/G2/G3 com eixos). Parado ele fica em zero.</td><td>Gravação com aceleração/desaceleração suave (LightBurn).</td></tr>
+              </tbody>
+            </table>
+            <p>Use o toggle <b>M3 fixo / M4 dinâmico</b> na aba Laser. Ele fica salvo no navegador.
+            O <b>Pulso</b> em M4 faz uma ida e volta curta em X para o laser acender de verdade;
+            “Ligar contínuo” em M4 é bloqueado com explicação, porque M4 parado não emite.
+            Para trabalhos, prefira M4 no LightBurn/LaserGRBL.</p>
+            <h4>Escala</h4>
+            <table>
+              <thead><tr><th>S</th><th>Potência</th><th>Observação</th></tr></thead>
+              <tbody>
+                <tr><td>S0</td><td>0%</td><td>Desligado (mas o estado pode ser M3).</td></tr>
+                <tr><td>S10</td><td>1%</td><td>Pode ficar abaixo do limiar do módulo.</td></tr>
+                <tr><td>S50</td><td>5%</td><td>Bom para primeiro teste de foco.</td></tr>
+                <tr><td>S100</td><td>10%</td><td>Teste recomendado se 1/5% não acender.</td></tr>
+                <tr><td>S500</td><td>50%</td><td>Teste de PWM; meça S-G.</td></tr>
+                <tr><td>S1000</td><td>100%</td><td>Máximo; risco alto.</td></tr>
+              </tbody>
+            </table>
+            <h4>Botões</h4>
+            <ul>
+              <li><b>Pulso</b> — M3: <code>G1 F100 M3 S...</code>, espera e <code>M5</code>.
+                M4: <code>G1 X... F100 M4 S...</code> ida e volta em X, depois <code>M5</code>.</li>
+              <li><b>Ligar contínuo</b> — M3: <code>G1 F100 M3 S...</code> e fica ligado até M5.
+                M4: bloqueado (M4 precisa de movimento).</li>
+              <li><b>DESLIGAR LASER</b> — envia <code>M5</code> imediatamente e também um arquivo de fallback.</li>
+              <li><b>Teste 50%</b> — pulso M3 de 1 s para medir S/G com multímetro.</li>
+            </ul>
+            <h4>Diagnóstico</h4>
+            <p>A aba mostra a config efetiva: <code>pwm_hz</code> (1500), <code>output_pin</code>
+            (gpio.32), <code>speed_map</code>, <code>tool_num</code> e <code>off_on_alarm</code>.
+            Se <code>off_on_alarm</code> for <code>false</code>, um alarme não corta o laser
+            automaticamente; use o botão vermelho. Se a página estiver bloqueada, o modo atual
+            não é laser: use o Dashboard/gate para trocar.</p>
+            <div class="help-note"><b>Se não acender:</b> (1) confirme que a máquina está em
+            <code>Idle</code>, não em Alarm/ConfigAlarm; (2) teste 10%; (3) confira TTL S/V/G,
+            V=12/24 V, G=GND; (4) meça S-G durante 50% (esperado ~2,5 V médio ou PWM 5 V);
+            (5) veja o checklist na aba Laser.</div>
+          </article>
+
+<article class="help-section" id="help-modos">
+            <h3>9. Modos e bloqueios (Dashboard/Controle/CNC/Laser)</h3>
+            <p>A TTC450 usa <b>um firmware</b> e <b>dois YAMLs</b>. O modo ativo muda o pino
+            <code>gpio.32</code>: no CNC ele vai para o relé do spindle (porta de 2 pinos, 0–24 V);
+            no laser ele vai para a porta TTL (3 pinos, 0–5 V). O cabo físico decide qual ferramenta
+            está conectada.</p>
+            <table>
+              <thead><tr><th>Modo</th><th>Config</th><th>Saída</th><th>S</th><th>Uso</th></tr></thead>
+              <tbody>
+                <tr><td><b>CNC</b></td><td><code>config_cnc_ts35.yaml</code></td><td>Relé 0–24 V, porta 2 pinos</td><td>0–12000 (S12000 = relé fechado)</td><td>Fresa/spindle 500 W</td></tr>
+                <tr><td><b>Laser</b></td><td><code>config_laser_ts35.yaml</code></td><td>PWM 0–5 V, porta TTL</td><td>0–1000 (S1000 = 100%)</td><td>Módulo laser</td></tr>
+              </tbody>
+            </table>
+            <h4>Três abas, papéis fixos</h4>
+            <table>
+              <thead><tr><th>Aba</th><th>Conteúdo</th><th>Bloqueio</th></tr></thead>
+              <tbody>
+                <tr><td><b>Controle</b></td><td>jog, zero, home, MDI, overrides feed/rapid, macros genéricas</td><td>Nunca; funciona nos dois modos</td></tr>
+                <tr><td><b>CNC</b></td><td>spindle, coolant, override spindle, probe, macros CNC, diagnóstico</td><td>Página inteira bloqueada no modo laser (gate)</td></tr>
+                <tr><td><b>Laser</b></td><td>potência, M3/M4, pulso, contínuo, OFF, diagnóstico, macros laser</td><td>Página inteira bloqueada no modo CNC (gate)</td></tr>
+              </tbody>
+            </table>
+            <h4>O gate (bloqueio)</h4>
+            <p>Quando o modo não corresponde, o conteúdo da aba CNC ou Laser fica com
+            <code>inert</code> (nenhum botão/input responde) e aparece um banner com o modo atual e
+            o botão <b>Trocar para CNC/laser</b>. O botão do gate e o M5 do topo continuam ativos.</p>
+            <h4>Como trocar</h4>
+            <p>Use o cartão <b>Modo da máquina</b> no Dashboard (ou o botão do gate). Ele grava
+            <code>$Config/Filename</code> e reinicia. Também funciona
+            <code>$Config/Filename=...</code> + <code>$Bye</code> no console.
+            <b>Desligue a máquina</b> antes de trocar o cabo do spindle pelo laser (ou vice-versa).</p>
+            <h4>Outras proteções</h4>
+            <ul>
+              <li><b>Macros:</b> cada macro tem um campo <b>Modo</b> (any/laser/CNC); as de outro
+                modo aparecem desabilitadas na página Macros e são bloqueadas na execução.</li>
+              <li><b>Arquivos:</b> rodar um <code>.nc</code> com “laser” no nome no modo CNC (ou
+                “cnc/spindle” no modo laser) mostra aviso antes.</li>
+              <li><b>Console/MDI:</b> comandos que parecem do modo errado pedem confirmação.</li>
+              <li><b>M5</b> é sempre permitido: é a parada de segurança de spindle/laser.</li>
+            </ul>
+            <div class="help-note red">O bloqueio é uma proteção de software. Ele <b>não</b> troca o
+            cabo nem impede um G-code externo (LightBurn). A troca física continua sendo sua
+            responsabilidade.</div>
+          </article>
+
+<article class="help-section" id="help-arquivos">
+            <h3>10. Arquivos</h3>
+            <p>Gerencia o <b>LittleFS</b> da placa. O cartão SD está desativado neste build com TS35.</p>
+            <table>
+              <thead><tr><th>Ação</th><th>O que faz</th></tr></thead>
+              <tbody>
+                <tr><td>Atualizar</td><td>Relê a pasta atual.</td></tr>
+                <tr><td>Enviar</td><td>Upload de um ou mais arquivos para a pasta atual.</td></tr>
+                <tr><td>Ver</td><td>Abre arquivos de texto (YAML, NC, JSON) no navegador.</td></tr>
+                <tr><td>Baixar</td><td>Baixa o arquivo.</td></tr>
+                <tr><td>Renomear / Apagar</td><td>Renomeia ou apaga (configs, macros e UI protegidos).</td></tr>
+                <tr><td>Rodar</td><td>Executa <code>$LocalFS/Run=arquivo.nc</code>.</td></tr>
+                <tr><td>Usar</td><td>Define o YAML como <code>$Config/Filename</code> e reinicia.</td></tr>
+                <tr><td>Nova pasta</td><td>Cria diretório.</td></tr>
+              </tbody>
+            </table>
+            <p>Protegidos contra exclusão: <code>index.html.gz</code>, <code>favicon.ico</code>,
+            <code>config*.yaml</code>, <code>macros.json</code>.</p>
+          </article>
+
+<article class="help-section" id="help-config">
+            <h3>11. Configurações</h3>
+            <h4>FluidNC Settings</h4>
+            <p>Lista o <code>$Settings/List</code>, agrupado por prefixo (Grbl, WiFi, Sta, AP, HTTP,
+            Telnet, etc.). Edite o valor e clique <b>Salvar</b>. Alguns itens exigem reboot.
+            Senhas aparecem mascaradas; deixe vazio para não alterar.</p>
+            <h4>WiFi</h4>
+            <p>Mostra <code>$WiFi/Status</code> e permite alterar SSID, senha, modo
+            (<code>STA</code>, <code>AP</code>, <code>STA&gt;AP</code>) e hostname. Salvar reinicia a
+            controladora. O WiFi fica na NVS, não no YAML.</p>
+            <h4>Config efetiva</h4>
+            <p>Mostra <code>$Config/Dump</code> (o YAML efetivamente carregado) e permite baixar.
+            Use para conferir <code>Laser:</code>, <code>PWM:</code>, pinos e limites.</p>
+            <h4>Firmware / OTA</h4>
+            <p>Mostra <code>$Firmware/Info</code>. O envio OTA grava um <code>.bin</code> e reinicia;
+            não desligue durante a gravação. Use a imagem correta para DLC32 V2.1/8 MB.</p>
+            <h4>Relatórios e preferências</h4>
+            <p><b>Relatórios</b> ajusta <code>$Report/Interval</code> (0 desliga; 1000 ms é o padrão).
+            <b>Preferências</b> muda unidades (mm/in), tema, intervalo de poll, verbose e autoscroll.
+            Ficam no navegador (localStorage).</p>
+          </article>
+
+<article class="help-section" id="help-console">
+            <h3>12. Console</h3>
+            <p>Envia comandos <code>$</code> e G-code. Comandos vão pelo WebSocket
+            (<code>commandText</code> + PAGEID); se o WS cair, a página tenta <code>plain</code> para
+            consultas, mas G-code precisa do WS.</p>
+            <p>Atalhos: <code>$I</code>, <code>$G</code>, <code>$#</code>, <code>$State</code>,
+            <code>$X</code>, <code>$H</code>, <code>$Settings/List</code>, <code>$Config/Dump</code>,
+            <code>$WiFi/Status</code>.</p>
+            <p><b>Verbose</b> mostra as linhas de status <code>&lt;...&gt;</code>; <b>Autoscroll</b>
+            acompanha o fim; <b>Filtro</b> esconde linhas que não contenham o texto.</p>
+          </article>
+
+<article class="help-section" id="help-macros">
+            <h3>13. Macros</h3>
+            <p>Cada macro tem nome, ícone, cor, tipo e confirmação:</p>
+            <ul>
+              <li><b>G-code</b> — executa as linhas (ex.: <code>M5</code>).</li>
+              <li><b>Arquivo</b> — executa <code>$LocalFS/Run=valor</code>.</li>
+              <li><b>URL</b> — abre um link.</li>
+            </ul>
+            <p>As macros são gravadas em <code>/macros.json</code> no LittleFS. O botão
+            <b>Salvar na máquina</b> envia o JSON. Se o arquivo não existir, a página usa os padrões.</p>
+            <p>Macro de laser correta: <code>G1 F100 M3 S50</code> + <code>G4 P1</code> +
+            <code>M5</code> (não use <code>M3 S50</code> sozinho).</p>
+          </article>
+
+<article class="help-section" id="help-camera-tablet">
+            <h3>14. Câmera e Tablet</h3>
+            <p><b>Câmera:</b> informe uma URL MJPEG/HTTP; a imagem aparece na aba. A câmera é opcional.</p>
+            <p><b>Tablet:</b> controles grandes para DRO, jog, laser OFF, pulso, unlock, home e zero.
+            Use <b>Tela cheia</b> para ocupar o display.</p>
+          </article>
+
+<article class="help-section" id="help-troubleshooting">
+            <h3>15. Solução de problemas</h3>
+            <h4>O laser não liga pela web</h4>
+            <ol>
+              <li>Confirme <code>Idle</code>; se estiver <b>ConfigAlarm</b> ou <b>Alarm</b>, o G-code
+                é bloqueado. Reinicie (ConfigAlarm) ou use <code>$X</code> (alarme simples).</li>
+              <li>Teste <b>10%</b>; 1% pode estar abaixo do limiar do módulo.</li>
+              <li>Use <b>Pulso</b> (a página manda <code>G1 F100 M3 S...</code>) — não use
+                <code>M3 S...</code> sozinho.</li>
+              <li>Confira TTL: S (PWM), V (12/24 V), G (GND), módulo ligado e interlock.</li>
+              <li>Meça S-G durante o teste 50%: ~2,5 V médio ou PWM 5 V. Se 0 V, problema de
+                sinal/config; se 5 V e não acende, módulo/alimentação.</li>
+              <li>Se o LightBurn funciona e a web não, o problema era o bloco <code>M3</code> sozinho
+                — use o pulso/arquivo <code>G1</code>.</li>
+            </ol>
+            <h4>M4 não acende parado</h4>
+            <p>M4 é <b>potência dinâmica</b>, não “contínuo”. Parado ele fica em zero. Use M3 para
+            teste estático ou o <b>Pulso M4</b> (que faz uma linha curta em X) / um G-code com
+            movimento.</p>
+            <h4>Página CNC (ou Laser) bloqueada</h4>
+            <p>O conteúdo da página fica <code>inert</code> quando o modo não corresponde: nenhum
+            botão/input responde. O gate mostra o modo atual e o botão <b>Trocar para CNC/laser</b>.
+            O bloqueio é só de software; ele não troca o cabo físico.</p>
+            <h4>ConfigAlarm / “Default (Test Drive)”</h4>
+            <p>O boot anterior foi um panic. O FluidNC não carrega o YAML e entra em ConfigAlarm.
+            Clique <b>Reiniciar agora</b> no banner ou envie <code>$Bye</code>. Não é o YAML quebrado;
+            os arquivos estão íntegros.</p>
+            <h4>WebSocket offline</h4>
+            <p>O banner vermelho aparece; a página tenta reconectar a cada 2,5 s. Consultas
+            <code>$</code> ainda podem funcionar por HTTP; G-code/jog dependem do WS. O laser tem
+            fallback por arquivo.</p>
+            <h4>WiFi caiu</h4>
+            <p>Verifique a rede 2,4 GHz, o IP no roteador e <code>fluidnc.local</code>. Em
+            <code>STA&gt;AP</code>, se a rede falhar, a placa sobe o AP <code>FluidNC</code>
+            (senha <code>12345678</code>, IP <code>192.168.0.1</code>).</p>
+            <h4>Alarme de limite / máquina não move</h4>
+            <p>Verifique o fim de curso, use <code>$X</code>/UNLOCK, faça jog para fora do switch e
+            depois <code>$H</code>. Nesta config <code>hard_limits</code> está ligado (parada
+            recuperável); se aparecer “Ambiguous switch”, o mapeamento de limite está errado.</p>
+            <h4>Z cai quando para</h4>
+            <p><code>idle_ms</code> está em 255 ms para segurar o Z; “Motores OFF” desliga os drivers
+            e o Z pode cair.</p>
+            <h4>Upload/arquivo falha</h4>
+            <p>Confira o espaço no LittleFS e o nome do arquivo. Configs/UI/macros são protegidos
+            contra exclusão. O cartão SD não existe neste build.</p>
+          </article>
+
+<article class="help-section" id="help-comandos">
+            <h3>16. Comandos e G-code</h3>
+            <table>
+              <thead><tr><th>Comando</th><th>Efeito</th></tr></thead>
+              <tbody>
+                <tr><td><code>$I</code></td><td>Versão, máquina, WiFi/IP.</td></tr>
+                <tr><td><code>$G</code></td><td>Estado modal (G0/G1, G54, G90, M3/M5, T, F, S).</td></tr>
+                <tr><td><code>?</code></td><td>Status em tempo real (via WS).</td></tr>
+                <tr><td><code>$#</code></td><td>Offsets G54…G59, G28/G30, G92, TLO.</td></tr>
+                <tr><td><code>$State</code></td><td>Estado atual (Idle, Alarm, ConfigAlarm…).</td></tr>
+                <tr><td><code>$X</code></td><td>Limpa alarme/destrava.</td></tr>
+                <tr><td><code>$H</code> / <code>$HX</code> / <code>$HY</code> / <code>$HZ</code></td><td>Homing geral ou por eixo.</td></tr>
+                <tr><td><code>$J=G91 G21 X10 F500</code></td><td>Jog incremental X.</td></tr>
+                <tr><td><code>$SLP</code></td><td>Sleep (sleep mode).</td></tr>
+                <tr><td><code>$C</code></td><td>Check mode (se permitido).</td></tr>
+                <tr><td><code>$Config/Filename=arquivo.yaml</code></td><td>Define o YAML do próximo boot.</td></tr>
+                <tr><td><code>$Config/Dump</code></td><td>Mostra a config efetiva.</td></tr>
+                <tr><td><code>$Settings/List</code></td><td>Lista settings <code>$Chave=valor</code>.</td></tr>
+                <tr><td><code>$LocalFS/List</code></td><td>Lista arquivos do LittleFS.</td></tr>
+                <tr><td><code>$LocalFS/Run=arquivo.nc</code></td><td>Executa um arquivo.</td></tr>
+                <tr><td><code>$WiFi/Status</code></td><td>Detalhes da rede.</td></tr>
+                <tr><td><code>$Firmware/Info</code></td><td>Versão/build/webcommunication.</td></tr>
+                <tr><td><code>$Bye</code></td><td>Reinicia o controlador.</td></tr>
+                <tr><td><code>M3 S...</code></td><td>Liga no modo contínuo (potência fixa). No laser, use junto com <code>G1</code>.</td></tr>
+                <tr><td><code>M4 S...</code></td><td>Liga o laser no modo dinâmico; precisa de movimento real (<code>G1 ... M4 S...</code>).</td></tr>
+                <tr><td><code>G1 X.. F.. M4 S..</code></td><td>Movimento com potência dinâmica M4 (LightBurn).</td></tr>
+                <tr><td><code>M5</code></td><td>Desliga spindle/laser.</td></tr>
+                <tr><td><code>M7/M8/M9</code></td><td>Coolant névoa/inundação/off.</td></tr>
+                <tr><td><code>G0 X.. Y..</code></td><td>Rapid.</td></tr>
+                <tr><td><code>G1 X.. Y.. F..</code></td><td>Feed/corte.</td></tr>
+                <tr><td><code>G1 F100 M3 S50</code></td><td>Laser estático em 5% (bloco de feed).</td></tr>
+                <tr><td><code>G4 P1</code></td><td>Dwell de 1 s.</td></tr>
+                <tr><td><code>G10 L20 P0 X0</code></td><td>Zero de trabalho no G54.</td></tr>
+                <tr><td><code>G38.2 Z-20 F100</code></td><td>Probe descendo.</td></tr>
+                <tr><td><code>G90/G91</code></td><td>Absoluto/incremental.</td></tr>
+                <tr><td><code>G20/G21</code></td><td>Polegadas/milímetros.</td></tr>
+              </tbody>
+            </table>
+            <div class="help-note">Exemplo M3 fixo (pulso estático de 5% por 1 s):
+            <pre>G1 F100 M3 S50
+G4 P1
+M5</pre>
+            Exemplo M4 dinâmico (linha de 2 mm em X, ida e volta):
+            <pre>G21 G91
+G1 X2 F100 M4 S50
+G1 X-2 F100 M4 S50
+G90
+M5</pre>
+            A página faz os dois via <code>$LocalFS/Run</code>.</div>
+          </article>
+
+<article class="help-section" id="help-faq">
+            <h3>17. Perguntas frequentes</h3>
+            <h4>Por que a página não tem login?</h4>
+            <p>Esta build do FluidNC está com <code>authentication:no</code>. Use só na rede local.</p>
+            <h4>Por que o laser funciona no LightBurn e não na web?</h4>
+            <p>Porque o LightBurn manda <code>G1/G2/G3 ... S...</code>; um <code>M3 S...</code>
+            sozinho é zerado no modo laser do FluidNC. A página agora usa <code>G1 F100 M3 S...</code>
+            via arquivo. No M4, o LightBurn também manda movimento; M4 parado não acende.</p>
+            <h4>M4 é “contínuo”? Como alterno?</h4>
+            <p>Não. M3 é potência fixa; M4 é potência dinâmica (proporcional à velocidade) e
+            precisa de movimento. Use o toggle <b>M3 fixo / M4 dinâmico</b> na aba Laser.
+            Para trabalho, prefira M4 no LightBurn/LaserGRBL.</p>
+            <h4>Por que a página CNC (ou Laser) fica bloqueada?</h4>
+            <p>Cada uma é exclusiva do seu modo. No modo laser, a CNC fica bloqueada; no modo CNC,
+            a Laser. Use o botão do gate ou o cartão <b>Modo da máquina</b> no Dashboard.</p>
+            <h4>Como troco entre CNC e laser?</h4>
+            <p>Dashboard → <b>Modo da máquina</b>, ou <code>$Config/Filename=...</code> +
+            <code>$Bye</code>. Desligue a máquina antes de trocar o cabo.</p>
+            <h4>Por que 1% não acende?</h4>
+            <p>Muitos módulos têm limiar mínimo. Teste 5% ou 10%.</p>
+            <h4>O que é ConfigAlarm?</h4>
+            <p>Fallback após panic. Reinicie; o YAML normal volta.</p>
+            <h4>Posso usar a tela TS35 e a web ao mesmo tempo?</h4>
+            <p>Sim, mas evite comandos simultâneos. A tela e a web compartilham o mesmo estado.</p>
+            <h4>Como restauro a WebUI original?</h4>
+            <p>O backup está em <code>ui/webui-original.html.gz</code>; envie como
+            <code>index.html.gz</code> e recarregue. Veja <code>ui/README.md</code>.</p>
+            <h4>O que é o PAGEID?</h4>
+            <p>É o ID da sessão WebSocket; o comando só é entregue à sessão correta. A página atualiza
+            sozinha ao reconectar.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= SOBRE ============================= -->
+  <section id="tab-about" class="tab">
+    <div class="grid2">
+      <div class="card">
+        <h2>Sobre</h2>
+        <div class="kv"><span>Firmware</span><b data-bind="fw">—</b></div>
+        <div class="kv"><span>Máquina</span><b data-bind="machine">—</b></div>
+        <div class="kv"><span>Config</span><b data-bind="config">—</b></div>
+        <div class="kv"><span>IP</span><b data-bind="ip">—</b></div>
+        <div class="kv"><span>Webcommunication</span><b id="aboutWebcomm">—</b></div>
+        <div class="kv"><span>MAC</span><b data-bind="mac">—</b></div>
+        <p class="small muted" style="margin-top:10px">
+          Esta interface é uma página customizada no LittleFS. A WebUI oficial desta build tem o
+          WebSocket de console quebrado; esta página usa o WebSocket da porta 80 e os endpoints
+          <code>/command?plain=</code> e <code>/command?commandText=</code>.
+        </p>
+      </div>
+      <div class="card">
+        <h2>Segurança e links</h2>
+        <ul class="small">
+          <li>Laser: óculos, exaustão, extintor, supervisão. O laser fica ligado até M5.</li>
+          <li>Desligue a máquina antes de trocar spindle ↔ laser.</li>
+          <li>Laser só na porta TTL de 3 pinos (S/V/G); spindle só na porta CNC de 2 pinos.</li>
+          <li>Sem autenticação: não exponha esta página na internet.</li>
+        </ul>
+        <p class="small">
+          <a href="http://wiki.fluidnc.com/" target="_blank" rel="noreferrer">FluidNC wiki</a> ·
+          <a href="https://wiki.twotrees3d.com/" target="_blank" rel="noreferrer">TwoTrees</a> ·
+          <a href="https://diode-laser-wiki.com/documentation/twotrees-ttc450-cnc-machine/" target="_blank" rel="noreferrer">Diode Laser Wiki</a>
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TTC450 · FluidNC · <span data-bind="ip">—</span></span>
+  <span id="footMsg" class="muted">—</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="viewDlg">
+  <form method="dialog"><button class="btn close" style="float:right">Fechar</button></form>
+  <h3 id="viewTitle"></h3>
+  <pre id="viewBody"></pre>
+</dialog>
+
+<dialog id="macroDlg">
+  <form method="dialog" id="macroForm">
+    <button class="btn close" style="float:right">Fechar</button>
+    <h3 id="macroDlgTitle">Macro</h3>
+    <div class="grid">
+      <div class="field"><label>Nome</label><input id="macroName" required></div>
+      <div class="field"><label>Ícone (emoji/texto)</label><input id="macroIcon" value="★"></div>
+      <div class="field"><label>Cor</label><input id="macroColor" type="color" value="#58a6ff"></div>
+      <div class="field"><label>Tipo</label>
+        <select id="macroType"><option value="gcode">G-code</option><option value="file">Arquivo ($LocalFS/Run)</option><option value="url">URL</option></select>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:8px">
+      <div class="field"><label>Modo da macro</label>
+        <select id="macroMode"><option value="any">Qualquer modo</option><option value="laser">Somente laser</option><option value="cnc">Somente CNC</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px"><label>Código / arquivo / URL</label><textarea id="macroCode" placeholder="G1 F100 M3 S50&#10;G4 P1&#10;M5"></textarea></div>
+    <label class="checklist" style="margin-top:6px"><input type="checkbox" id="macroConfirm" checked> Pedir confirmação</label>
+    <div class="row" style="margin-top:10px">
+      <button type="button" class="btn primary" id="macroSave">Salvar</button>
+      <button type="button" class="btn" id="macroCancel">Cancelar</button>
+      <button type="button" class="btn danger" id="macroDelete">Apagar</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+const DEFAULTS = {
+  units:'mm', theme:'dark', pollMs:2000, verbose:false, autoscroll:true,
+  confirmDanger:true, cameraUrl:'', filePath:'/', laserCmd:'M3'
+};
+const SETTING_LABELS = {
+  '$Grbl/LaserMode':'Modo laser (M3/M4)',
+  '$Grbl/MaxSpindleSpeed':'Máx. spindle/laser (S)',
+  '$Grbl/HardLimitsEnable':'Hard limits',
+  '$Grbl/SoftLimitsEnable':'Soft limits',
+  '$Grbl/HomingCycleEnable':'Homing',
+  '$Grbl/Resolution/X':'Steps/mm X', '$Grbl/Resolution/Y':'Steps/mm Y', '$Grbl/Resolution/Z':'Steps/mm Z',
+  '$Grbl/MaxRate/X':'Vel. máx. X', '$Grbl/MaxRate/Y':'Vel. máx. Y', '$Grbl/MaxRate/Z':'Vel. máx. Z',
+  '$Grbl/Acceleration/X':'Acel. X', '$Grbl/Acceleration/Y':'Acel. Y', '$Grbl/Acceleration/Z':'Acel. Z',
+  '$Grbl/MaxTravel/X':'Curso máx. X', '$Grbl/MaxTravel/Y':'Curso máx. Y', '$Grbl/MaxTravel/Z':'Curso máx. Z',
+  '$WiFi/Mode':'Modo WiFi', '$Sta/SSID':'SSID da rede', '$Sta/Password':'Senha da rede',
+  '$AP/SSID':'SSID do AP', '$AP/Password':'Senha do AP', '$Hostname':'Hostname',
+  '$HTTP/Port':'Porta HTTP', '$HTTP/BlockDuringMotion':'Bloquear HTTP durante movimento',
+  '$Telnet/Enable':'Telnet', '$Telnet/Port':'Porta Telnet', '$MDNS/Enable':'mDNS',
+  '$NTP/Enable':'NTP', '$Report/Interval':'Intervalo de status (ms)', '$Report/Status':'Status automático',
+  '$Message/Level':'Nível de mensagens', '$Config/Filename':'Arquivo de config ativo',
+  '$Start/Message':'Mensagem de boot', '$GCode/Echo':'Echo de G-code', '$SD/FallbackCS':'SD CS fallback'
+};
+const SETTING_HELP = {
+  '$Grbl/LaserMode':'1 = modo laser (potência por S). 0 = modo CNC.',
+  '$Grbl/MaxSpindleSpeed':'No laser, 1000. No CNC, 12000.',
+  '$Grbl/HardLimitsEnable':'1 = alarme ao bater no fim de curso. Nesta config está ligado (parada recuperável com $X/UNLOCK).',
+  '$Grbl/SoftLimitsEnable':'Limites por software; requer homing.',
+  '$WiFi/Mode':'STA, AP, STA>AP (fallback) ou AP>STA.',
+  '$Report/Interval':'Intervalo de auto-report no WebSocket.',
+  '$Config/Filename':'Config carregada no próximo boot.'
+};
+
+const DEFAULTS_MACROS = [
+  {name:'Home', icon:'⌂', color:'#58a6ff', type:'gcode', code:'$H', confirm:true, mode:'any'},
+  {name:'Destravar', icon:'🔓', color:'#3fb950', type:'gcode', code:'$X', confirm:false, mode:'any'},
+  {name:'Zero XY', icon:'0', color:'#d29922', type:'gcode', code:'G10 L20 P0 X0 Y0', confirm:true, mode:'any'},
+  {name:'Laser 5% M3', icon:'✦', color:'#f85149', type:'gcode', code:'G1 F100 M3 S50\nG4 P1\nM5', confirm:true, mode:'laser'},
+  {name:'Laser 5% M4 (linha)', icon:'≈', color:'#f85149', type:'gcode', code:'G21 G91\nG1 X2 F100 M4 S50\nG1 X-2 F100 M4 S50\nG90\nM5', confirm:true, mode:'laser'},
+  {name:'Spindle ON', icon:'⚙', color:'#8b949e', type:'gcode', code:'M3 S12000', confirm:true, mode:'cnc'},
+  {name:'Parar (M5)', icon:'■', color:'#f85149', type:'gcode', code:'M5', confirm:false, mode:'any'},
+  {name:'Park XY', icon:'⌖', color:'#bc8cff', type:'gcode', code:'G90 G0 X0 Y0', confirm:true, mode:'any'}
+];
+
+const S = {
+  ws:null, wsOpen:false, pageID:null, everConnected:false, reconnect:null,
+  prefs:{...DEFAULTS}, macros:[], files:[], filePath:'/',
+  status:{state:'?', mpos:[0,0,0], wpos:[0,0,0], wco:[0,0,0], fs:[0,0], ov:[100,100,100], pins:'', raw:''},
+  modal:{line:'—', spindle:'M5', s:0, units:'G21', distance:'G90', feed:'G94', tool:'T0'},
+  machine:'', config:'', firmware:'', ip:'', mac:'', wifi:'', signal:'', free:'', offsets:'',
+  settings:[], configDump:'', laserCfg:{}, probe:null, initialized:false,
+  lang:'pt', helpPtHtml:'', i18nBusy:false
+};
+
+/* ----------------------------- i18n (PT/EN) ----------------------------- */
+/* Português -> English. Chaves normalizadas (espaços simples).             */
+const EN = {
+  "Sem WebSocket. Reconectando… comandos de G-code/jog ficam indisponíveis temporariamente.": "No WebSocket. Reconnecting… G-code/jog commands are temporarily unavailable.",
+  "Esta interface é uma página customizada no LittleFS. A WebUI oficial desta build tem o WebSocket de console quebrado; esta página usa o WebSocket da porta 80 e os endpoints": "This interface is a custom page on LittleFS. The official WebUI in this build has a broken console WebSocket; this page uses the port-80 WebSocket and the endpoints",
+  "Com 50%, espere ~2,5 V médio (ou PWM 5 V). Se S ficar em 0 V, o problema é sinal/config; se tiver 5 V e o laser não acender, é módulo/alimentação.": "At 50%, expect ~2.5 V average (or 5 V PWM). If S stays at 0 V, the problem is signal/config; if it has 5 V and the laser still does not fire, it is module/power.",
+  "Comandos enviados via WebSocket (PAGEID). Se o WS cair, comandos de G-code não funcionam; comandos `$` podem ser consultados por HTTP.": "Commands are sent over the WebSocket (PAGEID). If the WS drops, G-code commands do not work; `$` commands can be queried over HTTP.",
+  "M3 fixo: potência constante; ideal para teste estático. M4 dinâmico: potência proporcional à velocidade; precisa de movimento.": "M3 fixed: constant power; ideal for static tests. M4 dynamic: power proportional to speed; needs motion.",
+  "Laser: use óculos adequados, exaustão/ar assistido, extintor e supervisão. O laser continua ligado até M5.": "Laser: wear suitable goggles, use exhaust/air assist, a fire extinguisher and supervision. The laser stays on until M5.",
+  "A troca reinicia a controladora e não troca o cabo físico. Desligue antes de trocar spindle ↔ laser.": "Switching restarts the controller and does not change the physical cable. Power off before swapping spindle ↔ laser.",
+  "`index.html.gz`, `help-en.html`, `favicon.ico`, configs e `macros.json` são protegidos contra exclusão.": "`index.html.gz`, `help-en.html`, `favicon.ico`, configs and `macros.json` are protected from deletion.",
+  "`index.html.gz`, `favicon.ico`, configs e `macros.json` são protegidos contra exclusão.": "`index.html.gz`, `favicon.ico`, configs and `macros.json` are protected from deletion.",
+  "Use a imagem .bin correta. A placa reinicia sozinha. Não desligue durante a gravação.": "Use the correct .bin image. The board restarts by itself. Do not power off during flashing.",
+  "O relé fecha acima de ~50% (S6000). A rotação é ajustada no potenciômetro da fonte.": "The relay closes above ~50% (S6000). Rotation is adjusted with the power supply potentiometer.",
+  "G38.2 desce o Z até tocar a placa. Confirme que a placa está conectada em gpio.22.": "G38.2 lowers Z until it touches the plate. Make sure the plate is connected to gpio.22.",
+  "Salvar grava SSID/senha/modo e reinicia o controlador. O WiFi não fica no YAML.": "Save writes SSID/password/mode and restarts the controller. WiFi is not stored in YAML.",
+  "Laser só na porta TTL de 3 pinos (S/V/G); spindle só na porta CNC de 2 pinos.": "Laser only on the 3-pin TTL port (S/V/G); spindle only on the 2-pin CNC port.",
+  "Laser: óculos, exaustão, extintor, supervisão. O laser fica ligado até M5.": "Laser: goggles, exhaust, extinguisher, supervision. The laser stays on until M5.",
+  "Zero usa G10 L20 P0 no sistema de coordenadas ativo (normalmente G54).": "Zero uses G10 L20 P0 in the active coordinate system (usually G54).",
+  "Somente macros genéricas. As específicas ficam nas páginas próprias.": "Only generic macros. Specific macros are on their own pages.",
+  "Sem autenticação nesta build. Não exponha esta página na internet.": "No authentication in this build. Do not expose this page to the internet.",
+  "Cada clique move um passo. Use passos pequenos perto dos limites.": "Each click moves one step. Use small steps near the limits.",
+  "Neste build com TS35 o SD fica desativado; use o LittleFS acima.": "In this TS35 build the SD card is disabled; use the LittleFS above.",
+  "Esta página só opera no modo CNC. Troque o modo no Dashboard.": "This page only works in CNC mode. Switch modes on the Dashboard.",
+  ". 1% pode ficar abaixo do limiar; comece em 5% ou 10%.": ". 1% may be below the module threshold; start at 5% or 10%.",
+  "Coolant não está configurado na TTC450 (pinos NO_PIN).": "Coolant is not configured on the TTC450 (NO_PIN pins).",
+  "Sem autenticação: não exponha esta página na internet.": "No authentication: do not expose this page to the internet.",
+  "Foco ajustado e material no lugar (para ver a marca).": "Focus adjusted and material in place (to see the mark).",
+  "Desligue a máquina antes de trocar spindle ↔ laser.": "Power off the machine before swapping spindle ↔ laser.",
+  "Use uma URL MJPEG/HTTP. A câmera não é obrigatória.": "Use an MJPEG/HTTP URL. The camera is optional.",
+  "Esta página só funciona no modo laser. Modo atual:": "This page only works in laser mode. Current mode:",
+  "Módulo ligado (LED/fan), chave/interlock acionado.": "Module powered (LED/fan), key/interlock engaged.",
+  "Esta página só funciona no modo CNC. Modo atual:": "This page only works in CNC mode. Current mode:",
+  "Se não acender nem em 10%, meça a tensão entre": "If it does not fire even at 10%, measure the voltage between",
+  "1% pode ficar abaixo do limiar do módulo": "1% may be below the module threshold",
+  "O checklist fica salvo neste navegador.": "The checklist is saved in this browser.",
+  "Troque o modo da máquina no Dashboard.": "Switch the machine mode on the Dashboard.",
+  "Somente macros marcadas como laser.": "Only macros marked as laser.",
+  "— se não acender, teste 5% ou 10%.": "— if it does not fire, test 5% or 10%.",
+  "M3 sozinho é zerado no modo laser": "M3 alone is zeroed in laser mode",
+  "Somente macros marcadas como CNC.": "Only macros marked as CNC.",
+  "Como a página fala com a máquina": "How the page talks to the machine",
+  "Senha (deixe vazio para manter)": "Password (leave blank to keep)",
+  "Óculos adequados e área segura.": "Suitable goggles and a safe area.",
+  "Overrides gerais de movimento.": "General motion overrides.",
+  "Coolant e override do spindle": "Coolant and spindle override",
+  "Clear Alarm / Destravar ($X)": "Clear Alarm / Unlock ($X)",
+  "Nenhuma câmera configurada.": "No camera configured.",
+  "Confirmar ações perigosas": "Confirm dangerous actions",
+  "Módulo conectado na porta": "Module connected to the",
+  "Overrides de feed e rapid": "Feed and rapid overrides",
+  "OTA (atualizar firmware)": "OTA (update firmware)",
+  "durante um teste de 50%.": "during a 50% test.",
+  "gravadas em /macros.json": "saved in /macros.json",
+  "Clear Alarm / Destravar": "Clear Alarm / Unlock",
+  "Arquivo ($LocalFS/Run)": "File ($LocalFS/Run)",
+  "Conceitos fundamentais": "Fundamental concepts",
+  "Código / arquivo / URL": "Code / file / URL",
+  "Introdução e segurança": "Introduction and safety",
+  "Atualizar status (ms)": "Status update (ms)",
+  "Autoscroll no console": "Autoscroll in console",
+  "Fins de curso / probe": "Limit switches / probe",
+  "Intervalo (ms, 0=off)": "Interval (ms, 0=off)",
+  "Controle (movimento)": "Control (motion)",
+  "Diagnóstico do laser": "Laser diagnostics",
+  "Perguntas frequentes": "FAQ",
+  "Relatórios de status": "Status reports",
+  "Solução de problemas": "Troubleshooting",
+  "DESLIGAR LASER (M5)": "LASER OFF (M5)",
+  "Override do spindle": "Spindle override",
+  "Posição de trabalho": "Work position",
+  "Potência (S0–S1000)": "Power (S0–S1000)",
+  "Salvar preferências": "Save preferences",
+  "Ícone (emoji/texto)": "Icon (emoji/text)",
+  "Salvar e reiniciar": "Save and restart",
+  "Ver config efetiva": "View effective config",
+  "Zero e coordenadas": "Zero and coordinates",
+  "Comandos e G-code": "Commands and G-code",
+  "Controle do laser": "Laser control",
+  "Modos e bloqueios": "Modes and interlocks",
+  "Motores OFF (M18)": "Motors OFF (M18)",
+  "Pedir confirmação": "Ask for confirmation",
+  "Página bloqueada.": "Page locked.",
+  "Reiniciar FluidNC": "Restart FluidNC",
+  "Salvar na máquina": "Save to machine",
+  "Segurança e links": "Safety and links",
+  "TTC450 — Controle": "TTC450 — Control",
+  "Trocar para laser": "Switch to laser",
+  "comandos e G-code": "commands and G-code",
+  "controles grandes": "large controls",
+  "Checklist físico": "Physical checklist",
+  "Reiniciar ($Bye)": "Restart ($Bye)",
+  "Câmera e Tablet": "Camera and Tablet",
+  "Enviar firmware": "Send firmware",
+  "Espessura placa": "Plate thickness",
+  "Macros de laser": "Laser macros",
+  "Modo da máquina": "Machine mode",
+  "Teste 50% · 1 s": "Test 50% · 1 s",
+  "Trocar para CNC": "Switch to CNC",
+  "Últimos eventos": "Latest events",
+  "Atualizar tudo": "Refresh all",
+  "Config efetiva": "Effective config",
+  "Curso máx (mm)": "Max travel (mm)",
+  "DESLIGAR LASER": "LASER OFF",
+  "Ligar contínuo": "Turn on (continuous)",
+  "Macros rápidas": "Quick macros",
+  "Manual / Ajuda": "Manual / Help",
+  "TTL de 3 pinos": "3-pin TTL",
+  "mostrar status": "show status",
+  "wiki da TTC450": "TTC450 wiki",
+  "Ações rápidas": "Quick actions",
+  "Configurações": "Settings",
+  "Desligar (M5)": "Turn off (M5)",
+  "Glossário A–Z": "Glossary A–Z",
+  "Ir para X0 Y0": "Go to X0 Y0",
+  "Macros de CNC": "CNC macros",
+  "Modo da macro": "Macro mode",
+  "O pulso envia": "The pulse sends",
+  "Qualquer modo": "Any mode",
+  "Somente laser": "Laser only",
+  "com 12/24 V e": "with 12/24 V and",
+  "Config ativa": "Active config",
+  "Potência / S": "Power / S",
+  "Preferências": "Preferences",
+  "Status agora": "Status now",
+  "Teste de PWM": "PWM test",
+  "Último teste": "Last test",
+  "Baixar YAML": "Download YAML",
+  "M4 dinâmico": "M4 dynamic",
+  "Modo e rede": "Mode and network",
+  "Motores OFF": "Motors OFF",
+  "Somente CNC": "CNC only",
+  "IP / sinal": "IP / signal",
+  "Ligar (M3)": "Turn on (M3)",
+  "M5 (parar)": "M5 (stop)",
+  "Modo atual": "Current mode",
+  "Modo laser": "Laser mode",
+  "Nova macro": "New macro",
+  "Nova pasta": "New folder",
+  "PARAR (M5)": "STOP (M5)",
+  "PWM / pino": "PWM / pin",
+  "Recarregar": "Reload",
+  "Referência": "Reference",
+  "Soft reset": "Soft reset",
+  "Tela cheia": "Fullscreen",
+  "Começando": "Getting started",
+  "Destravar": "Unlock",
+  "Overrides": "Overrides",
+  "Problemas": "Problems",
+  "Pulso (s)": "Pulse (s)",
+  "polegadas": "inches",
+  "Arquivos": "Files",
+  "Avançado": "Advanced",
+  "Cancelar": "Cancel",
+  "Controle": "Control",
+  "Desligar": "Turn off",
+  "Firmware": "Firmware",
+  "Imprimir": "Print",
+  "Modo CNC": "CNC mode",
+  "Potência": "Power",
+  "S máximo": "Max S",
+  "Unidades": "Units",
+  "Aplicar": "Apply",
+  "Console": "Console",
+  "Câmera": "Camera",
+  "Enviar": "Send",
+  "Estado": "State",
+  "Fechar": "Close",
+  "Limpar": "Clear",
+  "Macros": "Macros",
+  "Página": "Page",
+  "Salvar": "Save",
+  "Saída:": "Output:",
+  "Tablet": "Tablet",
+  "escuro": "dark",
+  "Ajuda": "Help",
+  "Ações": "Actions",
+  "Laser": "Laser",
+  "Macro": "Macro",
+  "Modal": "Modal",
+  "Pulso": "Pulse",
+  "Rapid": "Rapid",
+  "Recuo": "Retract",
+  "Sobre": "About",
+  "Telas": "Screens",
+  "Valor": "Value",
+  "claro": "light",
+  "Feed": "Feed",
+  "Home": "Home",
+  "Modo": "Mode",
+  "Nome": "Name",
+  "Pino": "Pin",
+  "Tema": "Theme",
+  "Tipo": "Type",
+  "WiFi": "WiFi",
+  "CNC": "CNC",
+  "Cor": "Color",
+  "Jog": "Jog",
+  "MAC": "MAC",
+  "MDI": "MDI",
+  "PWM": "PWM",
+  "URL": "URL",
+  "WCO": "WCO",
+  "via": "via",
+  "mm": "mm",
+  "e": "and",
+  "pasta": "folder",
+  "Pasta vazia.": "Empty folder.",
+  "Renomear": "Rename",
+  "Apagar": "Delete",
+  "Tamanho": "Size",
+  "Nome da pasta:": "Folder name:",
+  "Modo da máquina": "Machine mode",
+  "Laser / Spindle": "Laser / Spindle",
+  "MaxSpindleSpeed": "MaxSpindleSpeed",
+  "LaserMode": "LaserMode",
+  "off_on_alarm": "off_on_alarm",
+  "tool_num / off_on_alarm": "tool_num / off_on_alarm",
+  "Hard / Soft limits": "Hard / Soft limits",
+  "custom UI (index.html.gz)": "custom UI (index.html.gz)",
+  "TTC450 · FluidNC ·": "TTC450 · FluidNC ·",
+  "M5 (parar laser/spindle)": "M5 (stop laser/spindle)",
+  "Clear Alarm / Destravar ($X)": "Clear Alarm / Unlock ($X)",
+  "Spindle S12000": "Spindle S12000",
+  "Spindle S6000": "Spindle S6000",
+  "Flood (M8)": "Flood (M8)",
+  "Mist (M7)": "Mist (M7)",
+  "Off (M9)": "Off (M9)",
+  "Speed map": "Speed map",
+  "PWM / pino": "PWM / pin",
+  "WiFi": "WiFi",
+  "STA": "STA",
+  "AP": "AP",
+  "STA>AP": "STA>AP",
+  "AP>STA": "AP>STA",
+  "SSID (STA)": "SSID (STA)",
+  "Hostname": "Hostname",
+  "Webcommunication": "Webcommunication",
+  "FluidNC wiki": "FluidNC wiki",
+  "Diode Laser Wiki": "Diode Laser Wiki",
+  "TwoTrees": "TwoTrees",
+  "Laser (M3/M4)": "Laser (M3/M4)",
+  "M3 fixo": "M3 fixed",
+  "Laser —": "Laser —",
+  "LASER —": "LASER —",
+  "Spindle": "Spindle",
+  "Coolant": "Coolant",
+  "Overrides": "Overrides",
+  "Probe (touch plate)": "Probe (touch plate)",
+  "Z+": "Z+", "Z−": "Z−", "Y+": "Y+", "Y−": "Y−", "X+": "X+", "X−": "X−",
+  "Zero X": "Zero X", "Zero Y": "Zero Y", "Zero Z": "Zero Z", "Zero XY": "Zero XY", "Zero XYZ": "Zero XYZ",
+  "Home X": "Home X", "Home Y": "Home Y", "Home Z": "Home Z",
+  "Feed XY": "Feed XY", "Feed Z": "Feed Z", "S / FS": "S / FS",
+  "Modal": "Modal", "Offsets": "Offsets", "Config": "Config",
+  "F": "F", "G": "G", "S": "S", "V": "V", "X": "X", "Y": "Y", "Z": "Z",
+  "Ações": "Actions", "Homing ($H)": "Homing ($H)", "Probe Z": "Probe Z", "Pronto.": "Ready.",
+  "Pesquisar no manual (ex.: feed, laser, M3, probe)…": "Search the manual (e.g. feed, laser, M3, probe)…",
+  "Filtrar por chave (ex.: Laser, WiFi, Grbl)…": "Filter by key (e.g. Laser, WiFi, Grbl)…",
+  "filtrar…": "filter…",
+  "M5 imediato": "Immediate M5",
+  "1 = alarme ao bater no fim de curso. Nesta config está ligado (parada recuperável com $X/UNLOCK).": "1 = alarm when a limit switch is hit. In this config it is on (recoverable stop with $X/UNLOCK).",
+  "1 = modo laser (potência por S). 0 = modo CNC.": "1 = laser mode (power via S). 0 = CNC mode.",
+  "No laser, 1000. No CNC, 12000.": "Laser: 1000. CNC: 12000.",
+  "Máx. spindle/laser (S)": "Max spindle/laser (S)",
+  "Arquivo de config ativo": "Active config file",
+  "Mensagem de boot": "Boot message",
+  "Nível de mensagens": "Message level",
+  "Status automático": "Auto status",
+  "Intervalo de status (ms)": "Status interval (ms)",
+  "Porta HTTP": "HTTP port",
+  "Porta Telnet": "Telnet port",
+  "Bloquear HTTP durante movimento": "Block HTTP during motion",
+  "SSID da rede": "Network SSID",
+  "Senha da rede": "Network password",
+  "SSID do AP": "AP SSID",
+  "Senha do AP": "AP password",
+  "G-code echo": "G-code echo",
+  "SD CS fallback": "SD CS fallback",
+  "Máx. spindle/laser (S)": "Max spindle/laser (S)",
+  "Curso máx. X": "Max travel X", "Curso máx. Y": "Max travel Y", "Curso máx. Z": "Max travel Z",
+  "Vel. máx. X": "Max rate X", "Vel. máx. Y": "Max rate Y", "Vel. máx. Z": "Max rate Z",
+  "Acel. X": "Accel X", "Acel. Y": "Accel Y", "Acel. Z": "Accel Z",
+  "Modo WiFi": "WiFi mode",
+  "Porta HTTP": "HTTP port",
+  "Modo laser (M3/M4)": "Laser mode (M3/M4)",
+  "Hard limits": "Hard limits",
+  "Soft limits": "Soft limits",
+  "Homing": "Homing",
+  "Steps/mm X": "Steps/mm X", "Steps/mm Y": "Steps/mm Y", "Steps/mm Z": "Steps/mm Z",
+  "Nível de mensagens": "Message level",
+  "Status automático": "Auto status",
+  "Modo CNC ativo: M4/S baixo podem não acionar o relé do spindle. Continuar mesmo assim?": "CNC mode active: M4/low S may not close the spindle relay. Continue anyway?",
+  "Modo LASER ativo: troque para CNC antes de usar spindle/relé/coolant.": "LASER mode active: switch to CNC before using spindle/relay/coolant.",
+  "Modo CNC ativo: troque para laser antes de usar o laser.": "CNC mode active: switch to laser before using the laser.",
+  "Arquivo de laser no modo CNC. Troque para laser.": "Laser file in CNC mode. Switch to laser.",
+  "Arquivo de CNC no modo LASER. Troque para CNC.": "CNC file in LASER mode. Switch to CNC.",
+  "Macro de laser no modo CNC. Troque para laser.": "Laser macro in CNC mode. Switch to laser.",
+  "Macro de CNC no modo LASER. Troque para CNC.": "CNC macro in LASER mode. Switch to CNC.",
+  "M4 é dinâmico e precisa de movimento; use Pulso M4 (linha) ou o G-code do LightBurn.": "M4 is dynamic and needs motion; use M4 Pulse (line) or the LightBurn G-code.",
+  "M4 é dinâmico e precisa de movimento; use Pulso M4 (linha) ou o G-code. Para estático, selecione M3.": "M4 is dynamic and needs motion; use M4 Pulse (line) or G-code. For static, select M3.",
+  "Mudar para CNC e reiniciar? Desligue a máquina antes de trocar o cabo.": "Switch to CNC and restart? Power off the machine before changing the cable.",
+  "Mudar para laser e reiniciar? Desligue a máquina antes de trocar o cabo.": "Switch to laser and restart? Power off the machine before changing the cable.",
+  "Probe Z: descer até tocar a placa? Confirme a placa em gpio.22.": "Probe Z: lower until it touches the plate? Confirm the plate is on gpio.22.",
+  "Probe concluído": "Probe complete",
+  "Probe não tocou": "Probe did not touch",
+  "Não voltou a responder": "Did not come back",
+  "WebSocket não conectou ainda; comandos de G-code ficam limitados.": "WebSocket has not connected yet; G-code commands are limited.",
+  "config não carregada (ConfigAlarm?)": "config not loaded (ConfigAlarm?)",
+  "Aguarde o pulso anterior terminar": "Wait for the previous pulse to finish",
+  "Macro salva (lembre de salvar na máquina)": "Macro saved (remember to save it to the machine)",
+  "Pasta criada": "Folder created",
+  "Apagado": "Deleted",
+  "Renomeado": "Renamed",
+  "Enviando…": "Sending…",
+  "Enviado": "Sent",
+  "Erro no upload": "Upload error",
+  "Erro ao apagar": "Error deleting",
+  "Erro ao renomear": "Error renaming",
+  "Erro ao gravar macros": "Error saving macros",
+  "Erro ao ligar: ": "Error turning on: ",
+  "Erro na macro: ": "Macro error: ",
+  "Erro no pulso: ": "Pulse error: ",
+  "Erro: ": "Error: ",
+  "Erro no pulso": "Pulse error",
+  "Macro: ": "Macro: ",
+  "Pulso enviado": "Pulse sent",
+  "Laser ligado em S": "Laser on at S",
+  "Spindle ligado em S": "Spindle on at S",
+  "Renomeado": "Renamed",
+  "Nome da pasta:": "Folder name:",
+  "ALARME: ": "ALARM: ",
+  " — use $X para destravar após corrigir.": " — use $X to unlock after fixing.",
+  "Se não acender nem em 10%, meça a tensão entre ": "If it does not fire even at 10%, measure the voltage between ",
+  "WS reconectando…": "WS reconnecting…",
+  "WS offline": "WS offline",
+  "WS online": "WS online",
+  "Sem resposta da máquina": "No response from the machine",
+  "Erro ao listar arquivos": "Error listing files",
+  "Escolha um arquivo primeiro": "Choose a file first",
+  "Escolha um arquivo": "Choose a file",
+  "Não envie index.html.gz por aqui.": "Do not upload index.html.gz here.",
+  "Upload concluído": "Upload complete",
+  "Arquivo apagado: ": "File deleted: ",
+  "Config/UI não podem ser apagados por aqui.": "Config/UI cannot be deleted here.",
+  "Não consegui abrir a câmera.": "Could not open the camera.",
+  "Câmera salva": "Camera saved",
+  "Escolha um .bin": "Choose a .bin",
+  "Preferências salvas": "Preferences saved",
+  "Soft reset enviado": "Soft reset sent",
+  "WiFi salvo; reiniciando…": "WiFi saved; restarting…",
+  "Reiniciando; aguardando…": "Restarting; waiting…",
+  "Nome obrigatório": "Name required",
+  "macros.json gravado": "macros.json saved",
+  "Erro ao criar pasta": "Error creating folder",
+  "Erro ao ligar": "Error turning on",
+  "Erro no upload: ": "Upload error: ",
+  "Protocolo de probe": "Probe protocol",
+  "Probing…": "Probing…",
+  "Máquina": "Machine",
+  "Atualizar": "Refresh",
+  "sem status": "no status",
+  "Nenhuma configuração encontrada.": "No settings found.",
+  "não configurado no modo atual": "not configured in the current mode",
+  "M3 fixo: potência constante; ideal para foco/teste estático. M4 dinâmico: potência proporcional à velocidade; precisa de movimento.": "M3 fixed: constant power; ideal for focus/static testing. M4 dynamic: power proportional to speed; needs motion.",
+  "M4 dinâmico: potência proporcional à velocidade; precisa de movimento (Pulso M4/linha ou G-code). Não use M4 parado.": "M4 dynamic: power proportional to speed; needs motion (M4 Pulse/line or G-code). Do not use M4 while stationary.",
+  "editar": "edit",
+  "apagar": "delete",
+  "Ver": "View",
+  "Baixar": "Download",
+  "Usar": "Use",
+  "Rodar": "Run",
+  "Abrir": "Open",
+  "Parar (M5)": "Stop (M5)",
+  "o último boot foi após um panic; a config não foi carregada.": "the last boot was a panic; the config was not loaded.",
+  "Reiniciar agora": "Restart now",
+  "Limites por software; requer homing.": "Software limits; requires homing.",
+  "STA, AP, STA>AP (fallback) ou AP>STA.": "STA, AP, STA>AP (fallback) or AP>STA.",
+  "Intervalo de auto-report no WebSocket.": "WebSocket auto-report interval.",
+  "Config carregada no próximo boot.": "Config loaded on next boot.",
+  "Senha vazia — nada alterado": "Empty password — nothing changed.",
+  "Sem contato (PRB 0) — verifique a placa/limite.": "No contact (PRB 0) — check the plate/limit."
+};
+/* Regras para mensagens dinâmicas (valores numéricos). */
+const EN_RULES = [
+  [/^Pulso ([\d.,]+)s em S(\d+) \(([\d.,]+)%\)\. Óculos e área segura\?$/, m => `Pulse ${m[1]}s at S${m[2]} (${m[3]}%). Safety glasses and clear area?`],
+  [/^Pulso enviado: G1 F100 M3 S(\d+) \+ M5\.$/, m => `Pulse sent: G1 F100 M3 S${m[1]} + M5.`],
+  [/^M4 dinâmico S(\d+): linha de ~([\d.,]+) mm em X…$/, m => `M4 dynamic S${m[1]}: line of ~${m[2]} mm in X…`],
+  [/^M4 dinâmico: o teste vai mover ~([\d.,]+) mm em X \(ida e volta\) para o laser acender\. Confirme espaço, óculos e material\.$/, m => `M4 dynamic: the test will move ~${m[1]} mm in X (back and forth) to turn the laser on. Confirm space, glasses and material.`],
+  [/^Ligar o laser em S(\d+) \(([\d.,]+)%\)\? Ele fica ligado até M5\.$/, m => `Turn the laser on at S${m[1]} (${m[2]}%)? It stays on until M5.`],
+  [/^Ligar o spindle em S(\d+)\?$/, m => `Turn the spindle on at S${m[1]}?`],
+  [/^Modo LASER ativo: S(\d+) parece comando de spindle CNC\. Continuar mesmo assim\?$/, m => `LASER mode active: S${m[1]} looks like a CNC spindle command. Continue anyway?`],
+  [/^Salvar (.+)\?$/, m => `Save ${m[1]}?`],
+  [/^Apagar (.+)\?$/, m => `Delete ${m[1]}?`],
+  [/^Rodar (.+) no modo (LASER|CNC)\?$/, m => `Run ${m[1]} in ${m[2]} mode?`],
+  [/^Executar macro (.+)\?$/, m => `Run macro ${m[1]}?`],
+  [/^(\d+) seções$/, m => `${m[1]} sections`],
+  [/^(LASER|SPINDLE) LIGADO S(\d+)$/, m => `${m[1]} ON S${m[2]}`],
+  [/^(LASER|SPINDLE) LIGADO S(\d+) \(([\d.,]+)%\)$/, m => `${m[1]} ON S${m[2]} (${m[3]}%)`],
+  [/^LIGADO em S(\d+) \(G1 F100 M3\) — use DESLIGAR\.$/, m => `ON at S${m[1]} (G1 F100 M3) — use TURN OFF.`]
+];
+/* Frases para mensagens dinâmicas que não batem exatamente. */
+const EN_PHRASES = [
+  ["Óculos e área segura?", "Safety glasses and clear area?"],
+  ["Ele fica ligado até M5.", "It stays on until M5."],
+  ["ida e volta", "back and forth"],
+  ["para o laser acender", "to turn the laser on"],
+  ["Confirme espaço, óculos e material.", "Confirm space, glasses and material."],
+  ["linha de ~", "line of ~"],
+  ["Pulso enviado: ", "Pulse sent: "],
+  ["Pulso ", "Pulse "],
+  [" em S", " at S"],
+  ["Destravar", "Unlock"],
+  ["Parar (M5)", "Stop (M5)"],
+  ["(linha)", "(line)"],
+  ["Laser ligado em S", "Laser on at S"],
+  ["Spindle ligado em S", "Spindle on at S"],
+  ["Ligar o laser em ", "Turn the laser on at "],
+  ["Ligar o spindle em ", "Turn the spindle on at "],
+  ["LIGADO em S", "ON at S"],
+  [" — use DESLIGAR.", " — use TURN OFF."],
+  [" usados de ", " used of "],
+  ["Modo LASER ativo", "LASER mode active"],
+  ["Modo CNC ativo", "CNC mode active"],
+  ["Troque para", "Switch to"],
+  ["Aguarde ", "Wait "],
+  ["Erro no pulso: ", "Pulse error: "],
+  ["Erro ao ligar: ", "Error turning on: "],
+  ["Erro ao apagar", "Error deleting"],
+  ["Erro ao renomear", "Error renaming"],
+  ["Erro ao gravar macros", "Error saving macros"],
+  ["Erro na macro: ", "Macro error: "],
+  ["Erro: ", "Error: "],
+  ["Macro: ", "Macro: "],
+  ["Rodando ", "Running "],
+  [" no modo ", " in "],
+  ["Nome da pasta:", "Folder name:"],
+  ["Novo nome para ", "New name for "],
+  ["Pasta criada", "Folder created"],
+  ["Apagado", "Deleted"],
+  ["Renomeado", "Renamed"],
+  ["Enviando…", "Sending…"],
+  ["Enviado", "Sent"],
+  ["Erro no upload: ", "Upload error: "],
+  ["Erro no upload", "Upload error"],
+  ["Arquivo apagado: ", "File deleted: "],
+  ["ALARME:", "ALARM:"],
+  ["— use $X para destravar após corrigir.", "— use $X to unlock after fixing."],
+  [" salvo", " saved"],
+  ["Probe concluído; Z zerado com espessura ", "Probe complete; Z zeroed with thickness "],
+  ["Enviar firmware ", "Send firmware "],
+  ["? A placa reinicia e não pode ser desligada.", "? The board restarts and cannot be powered off."],
+  ["Não voltou a responder", "Did not come back"],
+  ["config não carregada", "config not loaded"],
+  ["verifique a máquina", "check the machine"],
+  [" seções", " sections"],
+  ["pasta", "folder"],
+  ["Ações", "Actions"],
+  ["Tamanho", "Size"],
+  ["Nome", "Name"],
+  ["Apagar", "Delete"],
+  ["Renomear", "Rename"],
+  ["Salvar", "Save"],
+  ["Enviar", "Send"],
+  ["Fechar", "Close"],
+  ["Cancelar", "Cancel"],
+  ["Imprimir", "Print"],
+  ["Recarregar", "Reload"],
+  ["Aplicar", "Apply"],
+  ["Limpar", "Clear"],
+  ["Pronto.", "Ready."]
+].sort((a,b)=>b[0].length-a[0].length);
+
+function trText(s){
+  if(!s) return s;
+  const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  if(!m) return s;
+  const lead=m[1], core=m[2], tail=m[3];
+  if(!core) return s;
+  const norm=core.replace(/\s+/g," ");
+  if(EN[norm]!==undefined) return lead+EN[norm]+tail;
+  for(const [re,fn] of EN_RULES){ const r=norm.match(re); if(r) return lead+fn(r)+tail; }
+  let out=norm;
+  for(const [pt,en] of EN_PHRASES){ if(out.includes(pt)) out=out.split(pt).join(en); }
+  return out===norm ? s : lead+out+tail;
+}
+function i18nText(s){ return S.lang==="en" ? trText(s) : s; }
+
+const i18nRecords=[];
+const i18nTextMap=new WeakMap();
+const i18nAttrMap=new WeakMap();
+function i18nSkip(el){
+  if(!el) return true;
+  return !!el.closest("[data-no-i18n],#helpContent,code,pre,script,style,.mono,.name,#configDump,#sdStatus,#viewBody,#viewTitle,#wifiStatus,#fileBreadcrumb");
+}
+function translateTextNode(node){
+  if(!node || node.nodeType!==3) return;
+  if(i18nSkip(node.parentElement)) return;
+  const raw=node.nodeValue.trim();
+  const logParent=node.parentElement && node.parentElement.closest("#consoleOut,#mdiOut,#dashEvents");
+  if(logParent && /^([>$\[<]|ok\b|error:|ALARM|Grbl|HLP:|PING|MDI>)/i.test(raw)) return;
+  const cur=node.nodeValue;
+  if(!cur || !cur.trim()) return;
+  const out=trText(cur);
+  let rec=i18nTextMap.get(node);
+  if(out!==cur){
+    if(!rec){ rec={node,pt:cur}; i18nTextMap.set(node,rec); i18nRecords.push(rec); }
+    else rec.pt=cur;
+    node.nodeValue=out;
+  } else if(!rec){
+    rec={node,pt:cur}; i18nTextMap.set(node,rec); i18nRecords.push(rec);
+  }
+}
+function translateAttr(el,attr){
+  if(!el || !el.getAttribute || !el.hasAttribute(attr)) return;
+  if(i18nSkip(el)) return;
+  const cur=el.getAttribute(attr);
+  if(!cur || !cur.trim()) return;
+  const out=trText(cur);
+  let map=i18nAttrMap.get(el); if(!map){ map=new Map(); i18nAttrMap.set(el,map); }
+  let rec=map.get(attr);
+  if(out!==cur){
+    if(!rec){ rec={el,attr,pt:cur}; map.set(attr,rec); i18nRecords.push(rec); }
+    else rec.pt=cur;
+    el.setAttribute(attr,out);
+  } else if(!rec){ rec={el,attr,pt:cur}; map.set(attr,rec); i18nRecords.push(rec); }
+}
+function translateTree(root){
+  if(!root) return;
+  if(root.nodeType===3){ translateTextNode(root); return; }
+  if(root.nodeType!==1) return;
+  if(i18nSkip(root)) return;
+  for(const a of ["placeholder","title","aria-label"]) translateAttr(root,a);
+  for(const child of root.childNodes) translateTree(child);
+}
+function restoreI18n(){
+  for(const r of i18nRecords){
+    if(r.node){ r.node.nodeValue=r.pt; }
+    else if(r.el && r.attr){ r.el.setAttribute(r.attr,r.pt); }
+  }
+}
+function applyLangDom(){
+  S.i18nBusy=true;
+  if(S.lang==="en") translateTree(document.body);
+  else restoreI18n();
+  S.i18nBusy=false;
+}
+let helpLangLoaded="";
+async function loadHelpLang(){
+  const box=$("#helpContent"); if(!box) return;
+  if(!S.helpPtHtml) S.helpPtHtml=box.innerHTML;
+  if(S.lang==="pt"){
+    if(helpLangLoaded!=="pt"){ box.innerHTML=S.helpPtHtml; helpLangLoaded="pt"; }
+    filterHelp(); return;
+  }
+  if(helpLangLoaded==="en"){ filterHelp(); return; }
+  try{
+    const r=await fetch("/help-en.html",{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    box.innerHTML=await r.text();
+    helpLangLoaded="en"; filterHelp();
+  }catch(e){
+    box.innerHTML=S.helpPtHtml; helpLangLoaded="pt"; filterHelp();
+    toast("English help not available; showing Portuguese.","err");
+  }
+}
+function applyLanguage(lang, initial=false){
+  S.lang=lang==="en"?"en":"pt";
+  document.documentElement.lang=S.lang;
+  localStorage.setItem("ttc450.lang",S.lang);
+  document.title=S.lang==="en"?"TTC450 — Control":"TTC450 — Controle";
+  const b=$("#langBtn");
+  if(b){ b.textContent=S.lang==="en"?"PT":"EN"; b.title=S.lang==="en"?"Switch to Portuguese":"Mudar para inglês"; }
+  applyLangDom();
+  if(!initial || S.lang==="en") loadHelpLang();
+  else helpLangLoaded="";
+}
+function toggleLanguage(){ applyLanguage(S.lang==="en"?"pt":"en"); }
+function initI18n(){
+  S.helpPtHtml=$("#helpContent")?.innerHTML||"";
+  const q=new URLSearchParams(location.search).get("lang");
+  const saved=localStorage.getItem("ttc450.lang");
+  const langs=navigator.languages||[navigator.language||"en"];
+  const detected = (q==="en"||q==="pt") ? q : ((saved==="en"||saved==="pt") ? saved : (langs.some(l=>/^pt(\b|-)/i.test(l))?"pt":"en"));
+  const nativeConfirm=window.confirm.bind(window), nativePrompt=window.prompt.bind(window), nativeAlert=window.alert.bind(window);
+  window.confirm=(msg)=>nativeConfirm(i18nText(msg));
+  window.prompt=(msg,def)=>nativePrompt(i18nText(msg),def);
+  window.alert=(msg)=>nativeAlert(i18nText(msg));
+  const obs=new MutationObserver(muts=>{
+    if(S.lang!=="en"||S.i18nBusy) return;
+    S.i18nBusy=true;
+    for(const m of muts){
+      if(m.type==="childList"){ for(const n of m.addedNodes) translateTree(n); }
+      else if(m.type==="characterData"){ translateTextNode(m.target); }
+      else if(m.type==="attributes"){ translateAttr(m.target,m.attributeName); }
+    }
+    S.i18nBusy=false;
+  });
+  obs.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["placeholder","title","aria-label"]});
+  $("#langBtn").onclick=toggleLanguage;
+  applyLanguage(detected,true);
+}
+
+/* ----------------------------- utils ----------------------------- */
+function toast(text, kind='') {
+  const t=$('#toast'); t.textContent=text; t.className='toast show '+kind;
+  clearTimeout(toast._t); toast._t=setTimeout(()=>{t.className='toast '+kind;},3500);
+}
+function foot(text){ $('#footMsg').textContent = text || '—'; }
+function fmt(n, d=3){ return Number.isFinite(Number(n)) ? Number(n).toFixed(d) : '—'; }
+function fmtSize(n){
+  n=Number(n); if(!Number.isFinite(n)||n<0) return '—';
+  if(n<1024) return n+' B';
+  if(n<1024*1024) return (n/1024).toFixed(n<10240?1:0)+' KB';
+  return (n/1024/1024).toFixed(2)+' MB';
+}
+function unit(){ return S.prefs.units==='in'?'in':'mm'; }
+function isLaserMode(){ return /laser/i.test(S.machine)||/laser/i.test(S.config); }
+function requireLaser(){
+  if(!isLaserMode()){ toast('Modo CNC ativo: troque para laser antes de usar o laser.','err'); return false; }
+  return true;
+}
+function requireCnc(){
+  if(isLaserMode()){ toast('Modo LASER ativo: troque para CNC antes de usar spindle/relé/coolant.','err'); return false; }
+  return true;
+}
+function toDisp(mm){ return S.prefs.units==='in' ? Number(mm)/25.4 : Number(mm); }
+function fmtPos(mm){ return fmt(toDisp(mm), 3); }
+function toMm(v){ return S.prefs.units==='in' ? Number(v)*25.4 : Number(v); }
+function fmtFeed(mmMin){ return S.prefs.units==='in' ? fmt(Number(mmMin)/25.4,1) : fmt(mmMin,0); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function needConfirm(msg){ return !S.prefs.confirmDanger || confirm(msg); }
+function setBind(key, value){ $$(`[data-bind="${key}"]`).forEach(el=>{ el.textContent=value; }); }
+
+/* ----------------------------- websocket ----------------------------- */
+function wsUrl(){
+  const proto = location.protocol==='https:'?'wss:':'ws:';
+  return `${proto}//${location.host}/`;
+}
+function connectWS(){
+  if(S.ws && (S.ws.readyState===WebSocket.OPEN || S.ws.readyState===WebSocket.CONNECTING)) return;
+  try{
+    const ws=new WebSocket(wsUrl(), ['arduino']);
+    ws.binaryType='arraybuffer';
+    S.ws=ws;
+    ws.onopen=()=>{ S.wsOpen=true; S.everConnected=true; S.reconnect=null; updateConn(); };
+    ws.onclose=()=>{ S.wsOpen=false; S.pageID=null; updateConn(); scheduleReconnect(); };
+    ws.onerror=()=>{ /* onclose cuida */ };
+    ws.onmessage=ev=>{
+      if(typeof ev.data==='string') handleWS(ev.data);
+      else {
+        try{ handleWS(new TextDecoder().decode(ev.data)); }
+        catch(e){ handleWS(''); }
+      }
+    };
+  }catch(e){ scheduleReconnect(); }
+}
+function scheduleReconnect(){
+  if(S.reconnect) return;
+  S.reconnect=setTimeout(()=>{ S.reconnect=null; connectWS(); }, 2500);
+}
+function updateConn(){
+  const c = S.wsOpen ? 'WS online' : (S.everConnected?'WS reconectando…':'WS offline');
+  setBind('conn', c);
+  $('#connbar').classList.toggle('show', !S.wsOpen && S.everConnected);
+  if(!S.wsOpen) setBind('conn', c);
+}
+function handleWS(text){
+  if(!text) return;
+  const idm = text.match(/(?:currentID|CURRENT_ID):(\d+)/);
+  if(idm){
+    S.pageID = Number(idm[1]);
+    onWSReady();
+  }
+  for(const line of text.split(/\r?\n/)){
+    if(!line) continue;
+    if(line==='PING') continue;
+    handleLine(line);
+  }
+}
+function onWSReady(){
+  if(!S.wsOpen || !S.pageID) return;
+  send('$Report/Interval=' + Math.max(100, Math.min(2000, S.prefs.pollMs)));
+  send('?');
+  S.initialized=true;
+}
+function handleLine(line){
+  const t=line.trim();
+  if(!t) return;
+  if(t.startsWith('<') && t.endsWith('>')) { parseStatus(t); if(S.prefs.verbose) log(t,'status'); return; }
+  if(t.startsWith('[GC:')) { parseModal(t); if(S.prefs.verbose) log(t,'status'); return; }
+  if(t.startsWith('[PRB:')){
+    const ok=/:1\]$/.test(t);
+    S.probe={ok, raw:t};
+    window.dispatchEvent(new CustomEvent('prb',{detail:{ok, raw:t}}));
+    log(t, ok?'ok':'err');
+    return;
+  }
+  let cls='';
+  if(/^ok\b/i.test(t)) cls='ok';
+  else if(/^error:/i.test(t) || /ALARM/i.test(t)) cls='err';
+  else if(/^\[MSG:/i.test(t) || /^\[PRB:/i.test(t)) cls='msg';
+  log(t, cls);
+  if(cls==='err'){ foot(t); toast(t,'err'); }
+  else if(/^\[MSG:INFO:/i.test(t) && /error|fail|invalid/i.test(t)) foot(t);
+}
+function parseStatus(line){
+  const inner=line.slice(1,-1);
+  const parts=inner.split('|');
+  const st={ state:(parts[0]||'?').split(':')[0], raw:inner };
+  for(const p of parts.slice(1)){
+    const i=p.indexOf(':'); if(i<0) continue;
+    st[p.slice(0,i)] = p.slice(i+1);
+  }
+  S.status.state=st.state;
+  if(st.MPos) S.status.mpos=st.MPos.split(',').map(Number);
+  if(st.WPos) S.status.wpos=st.WPos.split(',').map(Number);
+  if(st.WCO) S.status.wco=st.WCO.split(',').map(Number);
+  if(st.FS) S.status.fs=st.FS.split(',').map(Number);
+  if(st.Ov) S.status.ov=st.Ov.split(',').map(Number);
+  S.status.pins=st.Pn||'';
+  S.status.raw=inner;
+  renderStatus();
+}
+function parseModal(line){
+  const m=line.match(/\[GC:([^\]]+)\]/i); if(!m) return;
+  const toks=m[1].trim().split(/\s+/);
+  const md={line:m[1].trim(), spindle:'M5', s:0, units:'G21', distance:'G90', feed:'G94', tool:'T0'};
+  for(const tok of toks){
+    if(/^M[345]$/.test(tok)) md.spindle=tok;
+    else if(/^S-?\d/.test(tok)) md.s=Number(tok.slice(1));
+    else if(/^T\d+$/.test(tok)) md.tool=tok;
+    else if(/^G2[01]$/.test(tok)) md.units=tok;
+    else if(/^G9[01]$/.test(tok)) md.distance=tok;
+    else if(/^G9[34]$/.test(tok)) md.feed=tok;
+  }
+  S.modal=md;
+  renderModal();
+}
+function renderStatus(){
+  const st=S.status;
+  setBind('state', st.state || '—');
+  setBind('x', fmtPos(st.mpos[0]));
+  setBind('y', fmtPos(st.mpos[1]));
+  setBind('z', fmtPos(st.mpos[2]));
+  setBind('wpos', st.wpos.map(fmtPos).join('  '));
+  setBind('wco', st.wco.map(fmtPos).join('  '));
+  setBind('feed', fmtFeed(st.fs[0]));
+  setBind('spindle', fmt(st.fs[1],0));
+  setBind('fs', `${fmtFeed(st.fs[0])} ${unit()}/min · S${fmt(st.fs[1],0)}`);
+  setBind('ov', st.ov.map(v=>fmt(v,0)+'%').join(' / '));
+  setBind('pins', st.pins || '—');
+  $$('.dot').forEach(d=>{
+    const s=(st.state||'').toLowerCase();
+    d.className='dot ' + (/alarm/.test(s)?'alarm' : /idle/.test(s)?'idle' : /run|jog|home|hold|door|check/.test(s)?'busy':'');
+  });
+  const alarm=/alarm/i.test(st.state||'');
+  const configAlarm=/ConfigAlarm/i.test(st.state||'');
+  const ab=$('#alarmBanner');
+  ab.style.display=alarm?'block':'none';
+  if(configAlarm){
+    ab.innerHTML='<b>ConfigAlarm:</b> o último boot foi após um panic; a config não foi carregada. '+
+      '<button class="btn tiny" id="cfgRestart" style="margin-left:8px">Reiniciar agora</button>';
+    const b=$('#cfgRestart'); if(b) b.onclick=()=>doAction('restart');
+  } else if(alarm){
+    ab.textContent='ALARME: ' + (st.raw || 'verifique a máquina') + ' — use $X para destravar após corrigir.';
+  }
+  renderLaser();
+}
+function renderModal(){
+  setBind('gc', S.modal.line || '—');
+  setBind('unit', S.modal.units==='G20'?'in':'mm');
+  renderLaser();
+}
+function renderLaser(){
+  const m=S.modal;
+  const isL=isLaserMode();
+  const label=isL?'LASER':'SPINDLE';
+  const on=/^M[34]$/.test(m.spindle) && Number(m.s)>0;
+  const pct=(Math.max(0,Math.min(1000,Number(m.s)))/10);
+  const text = on ? `${label} LIGADO S${m.s}` : (m.spindle==='M5'?`${label} OFF`:`${label} ${m.spindle} S${m.s}`);
+  $$('.laser-badge').forEach(el=>{ el.textContent=text; el.className='badge laser-badge '+(on?'on':'off'); });
+  setBind('laserText', on ? `${label} LIGADO S${m.s} (${pct.toFixed(1)}%)` : (m.spindle==='M5'?`${label} OFF (M5)`:`${label} ${m.spindle} S${m.s}`));
+  setBind('spindleText', isL ? '—' : (on ? `SPINDLE LIGADO S${m.s}` : (m.spindle==='M5'?'SPINDLE OFF (M5)':`SPINDLE ${m.spindle} S${m.s}`)));
+  document.body.classList.toggle('laser-on', on && isL);
+  const pctEl=$('#laserPct'); if(pctEl) pctEl.textContent=pct.toFixed(1)+'%';
+  const sEl=$('#laserS'); if(sEl) sEl.textContent=String(m.s);
+  const stEl=$('#laserState'); if(stEl) stEl.textContent=m.spindle;
+}
+
+/* ----------------------------- commands ----------------------------- */
+async function query(text, timeout=10000){
+  const ctrl=new AbortController(); const id=setTimeout(()=>ctrl.abort(),timeout);
+  try{
+    const r=await fetch('/command?plain='+encodeURIComponent(text), {cache:'no-store',signal:ctrl.signal});
+    return await r.text();
+  }catch(e){ return ''; }
+  finally{ clearTimeout(id); }
+}
+// Sobe um G-code para o LittleFS e roda com $LocalFS/Run. Funciona sem WebSocket
+// e é o caminho que o FluidNC/LightBurn usam para laser (G1 ... M3 S...).
+async function uploadRun(code, name){
+  const text=code.endsWith('\n')?code:code+'\n';
+  const blob=new Blob([text],{type:'text/plain'});
+  const fd=new FormData();
+  fd.append('path','/');
+  fd.append(name+'S',String(blob.size));
+  fd.append('myfile[]',blob,name);
+  const r=await fetch('/files',{method:'POST',body:fd});
+  if(!r.ok) throw new Error('upload HTTP '+r.status);
+  const out=await query('$LocalFS/Run='+name,10000);
+  return out;
+}
+function send(text){
+  if(!S.wsOpen || S.pageID==null){ toast('WebSocket desconectado — comando não enviado','err'); return Promise.resolve(false); }
+  const url='/command?commandText='+encodeURIComponent(text)+'&PAGEID='+S.pageID;
+  return fetch(url,{cache:'no-store'}).then(r=>r.ok).catch(()=>false);
+}
+async function runLines(code, out){
+  const lines=String(code||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  for(const line of lines){
+    if(out) out(line);
+    await send(line);
+    await sleep(120);
+  }
+}
+function sendOvr(code){
+  if(!S.wsOpen || S.pageID==null){ toast('WS desconectado','err'); return; }
+  const ch=String.fromCharCode(code);
+  fetch('/command?commandText='+encodeURIComponent(ch)+'&PAGEID='+S.pageID,{cache:'no-store'}).catch(()=>{});
+}
+
+/* ----------------------------- render/bind ----------------------------- */
+function renderAllMeta(){
+  setBind('config', S.config || '—');
+  setBind('machine', S.machine || '—');
+  setBind('fw', S.firmware || '—');
+  setBind('ip', S.ip ? `${S.ip}${S.signal?` · ${S.signal}`:''}` : '—');
+  setBind('mac', S.mac || '—');
+  setBind('wifi', S.wifi || '—');
+  setBind('free', S.free || '—');
+  setBind('offsets', S.offsets || '—');
+  const laser=isLaserMode();
+  setBind('mode', laser?'LASER':'CNC');
+  document.body.classList.toggle('mode-laser', laser);
+  document.body.classList.toggle('mode-cnc', !laser);
+  $$('#powerRange').forEach(r=>{ r.max=laser?1000:12000; });
+  $$('#powerValue').forEach(r=>{ r.max=laser?1000:12000; });
+  const range=$('#laserRange'); if(range){ range.max=1000; }
+  const panic=$('#panicBtn'); if(panic) panic.textContent=laser?'DESLIGAR LASER':'DESLIGAR SPINDLE';
+  const mode=laser?'laser':'cnc';
+  if(S.lastMode!==mode){
+    S.lastMode=mode;
+    setPower(laser?50:12000);
+    setLaserCmd(S.prefs.laserCmd,false);
+  }
+  applyModeGate();
+}
+function applyModeGate(){
+  const laser=isLaserMode();
+  const cnc=$('#cncContent'), las=$('#laserContent');
+  if(cnc){ cnc.inert=laser; cnc.classList.toggle('gated',laser); cnc.setAttribute('aria-hidden',laser?'true':'false'); }
+  if(las){ las.inert=!laser; las.classList.toggle('gated',!laser); las.setAttribute('aria-hidden',!laser?'true':'false'); }
+  const cg=$('#cncGate'), lg=$('#laserGate');
+  if(cg) cg.style.display=laser?'block':'none';
+  if(lg) lg.style.display=laser?'none':'block';
+}
+
+/* ----------------------------- loaders ----------------------------- */
+async function loadIdentity(){
+  const [info,cfg,st,g] = await Promise.all([
+    query('$I'), query('$Config/Filename'), query('$State'), query('$G')
+  ]);
+  const m=info.match(/\[MSG:Machine:\s*([^\]]+)\]/i); S.machine=m?m[1].trim():'';
+  const mm=info.match(/MAC=([0-9A-F-]+)/i); if(mm) S.mac=mm[1];
+  const ip=info.match(/IP=([0-9.]+)/); if(ip) S.ip=ip[1];
+  const cm=cfg.match(/\$Config\/Filename=([^\s]+)/i); S.config=cm?cm[1]:'';
+  const ver=info.match(/\[VER:([^\]]+)\]/i); S.firmware=ver?ver[1].trim():'';
+  if(st) S.status.state=(st.match(/\(([^)]+)\)/)?.[1]||S.status.state);
+  if(g) parseModal(g);
+  renderStatus(); renderAllMeta(); renderLaser();
+}
+async function loadWifi(){
+  const w=await query('$WiFi/Status');
+  const s=await query('$Sta/SSID');
+  const ap=await query('$AP/SSID');
+  const host=await query('$Hostname');
+  const mode=await query('$WiFi/Mode');
+  S.wifi = (w.match(/Connected to:\s*(.+)/)?.[1] || (w.match(/Current WiFi Mode:\s*(.+)/)?.[1]||'').trim());
+  S.signal = (w.match(/Signal:\s*(.+)/)?.[1] || '').trim();
+  $('#wifiStatus').textContent = w || '—';
+  const ssid=s.match(/\$Sta\/SSID=(.*)/)?.[1]||'';
+  const hostv=host.match(/\$Hostname=(.*)/)?.[1]||'';
+  const modev=mode.match(/\$WiFi\/Mode=(.*)/)?.[1]?.trim()||'STA>AP';
+  $('#wifiSsid').value=ssid.trim();
+  $('#wifiHost').value=hostv.trim();
+  if([...$('#wifiMode').options].some(o=>o.value===modev)) $('#wifiMode').value=modev;
+  renderAllMeta();
+}
+async function loadOffsets(){
+  const t=await query('$#'); S.offsets=(t.match(/\[G54:[^\]]+\]/)?.[0]||'').trim(); renderAllMeta();
+}
+async function loadFirmware(){
+  const t=await query('$Firmware/Info'); S.firmwareInfo=t;
+  $('#fwInfo').textContent=t||'—';
+  const wc=t.match(/webcommunication:\s*([^#]+)/i); if(wc) $('#diagWebcomm').textContent=wc[1].trim();
+  $('#aboutWebcomm').textContent=wc?wc[1].trim():'—';
+}
+async function loadSettings(){
+  const t=await query('$Settings/List',15000);
+  S.settings=t.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.startsWith('$')&&l.includes('=')).map(l=>{
+    const i=l.indexOf('='); return {key:l.slice(0,i), value:l.slice(i+1)};
+  });
+  renderSettings();
+  updateDiagSettings();
+}
+function renderSettings(){
+  const filter=($('#settingsFilter').value||'').toLowerCase();
+  const groups=new Map();
+  for(const s of S.settings){
+    if(filter && !s.key.toLowerCase().includes(filter)) continue;
+    const m=s.key.match(/^\$([^/]+)/); const g=m?m[1]:'Outros';
+    if(!groups.has(g)) groups.set(g,[]);
+    groups.get(g).push(s);
+  }
+  const box=$('#settingsGroups'); box.textContent='';
+  if(!groups.size){ box.textContent='Nenhuma configuração encontrada.'; return; }
+  for(const [g,items] of [...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0]))){
+    const sec=document.createElement('div'); sec.className='card';
+    const h=document.createElement('h2'); h.textContent=g; sec.appendChild(h);
+    for(const s of items){
+      const div=document.createElement('div'); div.className='setting';
+      const row=document.createElement('div'); row.className='srow';
+      const label=document.createElement('label'); label.className='grow';
+      label.textContent=(SETTING_LABELS[s.key]||s.key)+'  ';
+      const code=document.createElement('span'); code.className='muted small mono'; code.textContent=s.key; label.appendChild(code);
+      const input=document.createElement('input'); input.value=s.value; input.className='grow';
+      if(/Password/i.test(s.key)){ input.type='password'; input.value=s.value==='********'?'':s.value; input.placeholder='••••••'; }
+      const btn=document.createElement('button'); btn.className='btn tiny'; btn.textContent='Salvar';
+      btn.onclick=async()=>{
+        if(/Password/i.test(s.key) && !input.value){ toast('Senha vazia — nada alterado'); return; }
+        if(!needConfirm(`Salvar ${s.key}=${input.value}?`)) return;
+        const r=await query(s.key+'='+input.value);
+        toast((r||'ok').trim().slice(0,120),'ok'); foot(s.key+' salvo');
+        setTimeout(loadSettings,500);
+      };
+      row.append(label,input,btn);
+      div.appendChild(row);
+      if(SETTING_HELP[s.key]){ const hlp=document.createElement('div'); hlp.className='help'; hlp.textContent=SETTING_HELP[s.key]; div.appendChild(hlp); }
+      sec.appendChild(div);
+    }
+    box.appendChild(sec);
+  }
+}
+async function loadConfigDump(){
+  const t=await query('$Config/Dump',15000);
+  S.configDump=t||''; $('#configDump').textContent=t||'—';
+  const laser={}, pwm={}; let inLaser=false, inPwm=false;
+  for(const line of t.split(/\r?\n/)){
+    if(/^Laser:\s*$/.test(line)){ inLaser=true; inPwm=false; continue; }
+    if(/^PWM:\s*$/.test(line)){ inPwm=true; inLaser=false; continue; }
+    if(/^\S/.test(line)){ inLaser=false; inPwm=false; continue; }
+    if(inLaser){
+      const m=line.match(/^\s+([A-Za-z0-9_]+):\s*(.*)$/); if(m) laser[m[1]]=m[2];
+    } else if(inPwm){
+      const m=line.match(/^\s+([A-Za-z0-9_]+):\s*(.*)$/); if(m) pwm[m[1]]=m[2];
+    }
+  }
+  S.laserCfg=laser; S.pwmCfg=pwm;
+  const loaded=!!(laser.pwm_hz||laser.output_pin);
+  $('#diagPwm').textContent = loaded ? `${laser.pwm_hz||'—'} Hz · ${laser.output_pin||'—'}` : 'config não carregada (ConfigAlarm?)';
+  $('#diagMap').textContent = loaded ? (laser.speed_map||'—') : '—';
+  $('#diagTool').textContent = loaded ? `${laser.tool_num||'—'} · ${laser.off_on_alarm||'—'}` : '—';
+  const loadedPwm=!!(pwm.pwm_hz||pwm.output_pin);
+  const cp=$('#cncPwm'), cm=$('#cncMap'), co=$('#cncOffAlarm');
+  if(cp) cp.textContent = loadedPwm ? `${pwm.pwm_hz||'—'} Hz · ${pwm.output_pin||'—'}` : 'não configurado no modo atual';
+  if(cm) cm.textContent = loadedPwm ? (pwm.speed_map||'—') : '—';
+  if(co) co.textContent = loadedPwm ? (pwm.off_on_alarm||'—') : '—';
+  updateDiagSettings();
+}
+function updateDiagSettings(){
+  const get=k=>S.settings.find(s=>s.key===k)?.value ?? '—';
+  const lm=$('#diagLaserMode'), ms=$('#diagMaxS');
+  if(lm) lm.textContent=get('$Grbl/LaserMode');
+  if(ms) ms.textContent=get('$Grbl/MaxSpindleSpeed');
+  const cl=$('#cncLimits'), cm=$('#cncMaxS');
+  if(cl) cl.textContent=`hard ${get('$Grbl/HardLimitsEnable')} · soft ${get('$Grbl/SoftLimitsEnable')}`;
+  if(cm) cm.textContent=get('$Grbl/MaxSpindleSpeed');
+}
+
+/* ----------------------------- wifi ----------------------------- */
+async function saveWifi(){
+  const ssid=$('#wifiSsid').value.trim();
+  const pass=$('#wifiPass').value;
+  const mode=$('#wifiMode').value;
+  const host=$('#wifiHost').value.trim();
+  if(!needConfirm('Salvar WiFi e reiniciar a controladora?')) return;
+  if(ssid) await query('$Sta/SSID='+ssid);
+  if(pass) await query('$Sta/Password='+pass);
+  if(mode) await query('$WiFi/Mode='+mode);
+  if(host) await query('$Hostname='+host);
+  toast('WiFi salvo; reiniciando…','ok');
+  await query('$Bye',3000).catch(()=>{});
+  await waitOnline();
+}
+
+/* ----------------------------- files ----------------------------- */
+function fileUrl(path,name){ return '/' + (path.replace(/^\/+/,'') + name).split('/').map(encodeURIComponent).join('/'); }
+async function loadFiles(path=S.filePath){
+  S.filePath=path && path.startsWith('/')?path:'/';
+  try{
+    const r=await fetch('/files?path='+encodeURIComponent(S.filePath),{cache:'no-store'});
+    const j=await r.json();
+    S.files=(j.files||[]).map(f=>({...f, dir:Number(f.size)<0}));
+    $('#fsInfo').textContent = `${j.used||'?'} usados de ${j.total||'?'} (${j.occupation||'?'}%)`;
+    S.free=`${j.total||'?'} total · ${j.used||'?'} usados`;
+    renderAllMeta();
+    renderFiles();
+  }catch(e){ toast('Erro ao listar arquivos','err'); }
+}
+function renderFiles(){
+  const tb=$('#fileList'); tb.textContent='';
+  const bc=$('#fileBreadcrumb'); bc.textContent='';
+  const parts=S.filePath.split('/').filter(Boolean);
+  const root=document.createElement('button'); root.className='btn tiny'; root.textContent='/'; root.onclick=()=>loadFiles('/'); bc.appendChild(root);
+  let acc='';
+  for(const p of parts){ acc+='/'+p; const b=document.createElement('button'); b.className='btn tiny'; b.textContent=p; b.onclick=()=>loadFiles(acc); bc.appendChild(document.createTextNode(' / ')); bc.appendChild(b); }
+  if(S.filePath!=='/'){
+    const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=3;
+    const up=document.createElement('button'); up.className='btn tiny'; up.textContent='↑ Subir';
+    up.onclick=()=>loadFiles(S.filePath.replace(/[^/]+\/?$/,'')||'/'); td.appendChild(up); tr.appendChild(td); tb.appendChild(tr);
+  }
+  for(const f of S.files){
+    if(f.name.startsWith('_web_')) continue;
+    const tr=document.createElement('tr');
+    const name=document.createElement('td'); name.className='name'; name.textContent=f.name;
+    if(!f.dir && f.name===S.config){ const tag=document.createElement('span'); tag.className='tag'; tag.textContent='ATIVO'; name.appendChild(tag); }
+    const size=document.createElement('td'); size.textContent=f.dir?'pasta':fmtSize(f.size);
+    const acts=document.createElement('td'); acts.className='acts';
+    if(f.dir){
+      const b=document.createElement('button'); b.className='btn tiny'; b.textContent='Abrir'; b.onclick=()=>loadFiles((S.filePath==='/'?'/':S.filePath.replace(/\/$/,'')+'/')+f.name); acts.appendChild(b);
+    } else {
+      if(/\.(ya?ml|nc|gcode|g|txt|json|log|ini|cfg)$/i.test(f.name)){
+        const v=document.createElement('button'); v.className='btn tiny'; v.textContent='Ver'; v.onclick=()=>viewFile((S.filePath==='/'?'/':S.filePath.replace(/\/$/,'')+'/')+f.name); acts.appendChild(v);
+      }
+      const d=document.createElement('a'); d.className='btn tiny'; d.textContent='Baixar'; d.href=fileUrl(S.filePath,f.name); d.download=f.name; acts.appendChild(d);
+      if(!/^(index\.html\.gz|help-en\.html|favicon\.ico|config.*\.yaml|macros\.json)$/i.test(f.name)){
+        const ren=document.createElement('button'); ren.className='btn tiny'; ren.textContent='Renomear'; ren.onclick=()=>renameFile(f.name); acts.appendChild(ren);
+        const del=document.createElement('button'); del.className='btn tiny danger'; del.textContent='Apagar'; del.onclick=()=>deleteFile(f.name); acts.appendChild(del);
+      }
+      if(/\.nc$/i.test(f.name)){
+        const run=document.createElement('button'); run.className='btn tiny primary'; run.textContent='Rodar'; run.onclick=()=>runFile((S.filePath==='/'?'/':S.filePath.replace(/\/$/,'')+'/')+f.name); acts.appendChild(run);
+      }
+      if(/\.ya?ml$/i.test(f.name)){
+        const cfg=document.createElement('button'); cfg.className='btn tiny blue'; cfg.textContent='Usar'; cfg.onclick=()=>useConfig(f.name); acts.appendChild(cfg);
+      }
+    }
+    tr.append(name,size,acts); tb.appendChild(tr);
+  }
+  if(!S.files.length){ const tr=document.createElement('tr'); const td=document.createElement('td'); td.colSpan=3; td.textContent='Pasta vazia.'; tr.appendChild(td); tb.appendChild(tr); }
+}
+async function viewFile(full){
+  $('#viewTitle').textContent=full; $('#viewBody').textContent='Carregando…'; $('#viewDlg').showModal();
+  try{ const r=await fetch('/'+full.split('/').filter(Boolean).map(encodeURIComponent).join('/'),{cache:'no-store'}); const t=await r.text(); $('#viewBody').textContent=t.length>150000?t.slice(0,150000)+'\n\n… (truncado)':t; }
+  catch(e){ $('#viewBody').textContent='Erro: '+e.message; }
+}
+async function deleteFile(name){
+  if(/^(index\.html\.gz|help-en\.html|favicon\.ico|config.*\.yaml|macros\.json)$/i.test(name)){
+    toast('Config/UI não podem ser apagados por aqui.','err'); return;
+  }
+  if(!needConfirm('Apagar '+name+'?')) return;
+  const r=await fetch('/files?action=delete&path='+encodeURIComponent(S.filePath)+'&filename='+encodeURIComponent(name),{cache:'no-store'});
+  toast(r.ok?'Apagado':'Erro ao apagar',r.ok?'ok':'err'); await loadFiles();
+}
+async function renameFile(name){
+  const nn=prompt('Novo nome para '+name+':',name);
+  if(!nn || nn===name) return;
+  const r=await fetch('/files?action=rename&path='+encodeURIComponent(S.filePath)+'&filename='+encodeURIComponent(name)+'&newname='+encodeURIComponent(nn),{cache:'no-store'});
+  toast(r.ok?'Renomeado':'Erro ao renomear',r.ok?'ok':'err'); await loadFiles();
+}
+async function runFile(full){
+  const laserName=/laser/i.test(full);
+  const cncName=/(cnc|spindle|fresa|relay)/i.test(full);
+  if(laserName && !isLaserMode()){
+    toast('Arquivo de laser no modo CNC. Troque para laser.','err');
+    if(!needConfirm('Rodar mesmo assim?')) return;
+  }
+  if(cncName && isLaserMode()){
+    toast('Arquivo de CNC no modo LASER. Troque para CNC.','err');
+    if(!needConfirm('Rodar mesmo assim?')) return;
+  }
+  if(!needConfirm('Rodar '+full+' no modo '+(isLaserMode()?'LASER':'CNC')+'?')) return;
+  toast('Rodando '+full,'ok');
+  await query('$LocalFS/Run='+full);
+}
+async function useConfig(name){
+  if(!needConfirm('Carregar '+name+' e reiniciar? Desligue a máquina antes de trocar o cabo.')) return;
+  await query('$Config/Filename='+name); await query('$Bye',3000).catch(()=>{}); await waitOnline();
+}
+async function uploadFiles(){
+  const files=$('#fileInput').files; if(!files.length){ toast('Escolha um arquivo','err'); return; }
+  const fd=new FormData(); fd.append('path',S.filePath);
+  for(const f of files){
+    if(f.name==='index.html.gz'){ toast('Não envie index.html.gz por aqui','err'); return; }
+    const name=(S.filePath==='/'?'/':S.filePath.replace(/\/$/,'')+'/')+f.name;
+    fd.append(name+'S',String(f.size));
+    fd.append('myfile[]',f,name);
+  }
+  $('#fileMsg').textContent='Enviando…';
+  try{ const r=await fetch('/files',{method:'POST',body:fd}); if(!r.ok) throw new Error('HTTP '+r.status); $('#fileMsg').textContent='Enviado'; $('#fileInput').value=''; await loadFiles(); }
+  catch(e){ $('#fileMsg').textContent='Erro: '+e.message; toast('Erro no upload','err'); }
+}
+async function mkdir(){
+  const name=prompt('Nome da pasta:'); if(!name) return;
+  const r=await fetch('/files?action=createdir&path='+encodeURIComponent(S.filePath)+'&filename='+encodeURIComponent(name));
+  toast(r.ok?'Pasta criada':'Erro',r.ok?'ok':'err'); await loadFiles();
+}
+async function loadSD(){ const t=await query('$SD/List'); $('#sdStatus').textContent=t||'—'; }
+
+/* ----------------------------- macros ----------------------------- */
+function defaultMacros(){ return DEFAULTS_MACROS.map(m=>({...m})); }
+async function loadMacros(){
+  try{
+    const r=await fetch('/macros.json',{cache:'no-store'});
+    if(r.ok){ const j=await r.json(); S.macros=Array.isArray(j)?j:defaultMacros(); }
+    else S.macros=defaultMacros();
+  }catch(e){ S.macros=defaultMacros(); }
+  renderMacros(); renderQuickMacros();
+}
+function renderMacros(){
+  const box=$('#macroList'); box.textContent='';
+  for(const [i,m] of S.macros.entries()){
+    const el=document.createElement('div'); el.className='macro'; el.style.borderLeftColor=m.color||'#58a6ff';
+    const nm=document.createElement('div'); nm.className='mname'; nm.textContent=(m.icon||'★')+' '+m.name;
+    const ty=document.createElement('div'); ty.className='mtype'; ty.textContent=(m.type||'gcode')+' · '+(m.mode||'any');
+    const ed=document.createElement('div'); ed.className='medit';
+    const e=document.createElement('button'); e.textContent='editar'; e.onclick=ev=>{ev.stopPropagation(); openMacroEditor(i);};
+    const d=document.createElement('button'); d.textContent='apagar'; d.onclick=ev=>{ev.stopPropagation(); if(confirm('Apagar macro '+m.name+'?')){S.macros.splice(i,1); renderMacros();}};
+    ed.append(e,d); el.append(nm,ty,ed);
+    const blocked=(m.mode==='laser'&&!isLaserMode())||(m.mode==='cnc'&&isLaserMode());
+    el.classList.toggle('disabled',blocked);
+    el.onclick=()=>{ if(blocked){ toast('Macro de outro modo. Troque o modo no Dashboard.','err'); return; } runMacro(m); };
+    box.appendChild(el);
+  }
+  renderQuickMacros();
+}
+function renderQuickGrid(id, mode){
+  const box=$(id); if(!box) return; box.textContent='';
+  S.macros.filter(m=>(m.mode||'any')===mode).forEach(m=>{
+    const b=document.createElement('button'); b.className='btn'; b.style.borderLeft='4px solid '+(m.color||'#58a6ff');
+    b.textContent=(m.icon||'★')+' '+m.name; b.onclick=()=>runMacro(m); box.appendChild(b);
+  });
+}
+function renderQuickMacros(){
+  renderQuickGrid('#quickMacros','any');
+  renderQuickGrid('#cncMacros','cnc');
+  renderQuickGrid('#laserMacros','laser');
+}
+async function runMacro(m){
+  if(m.mode==='laser' && !isLaserMode()){
+    toast('Macro de laser no modo CNC. Troque para laser.','err');
+    if(!needConfirm('Continuar mesmo assim?')) return;
+  }
+  if(m.mode==='cnc' && isLaserMode()){
+    toast('Macro de CNC no modo LASER. Troque para CNC.','err');
+    if(!needConfirm('Continuar mesmo assim?')) return;
+  }
+  if(m.confirm && !needConfirm('Executar macro '+m.name+'?')) return;
+  toast('Macro: '+m.name,'ok'); foot('macro '+m.name);
+  if(m.type==='url'){ window.open(m.code,'_blank','noopener'); return; }
+  if(m.type==='file'){ await query('$LocalFS/Run='+m.code.trim()); return; }
+  const lines=String(m.code||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(lines.length && !lines.some(l=>l.startsWith('$'))){
+    // G-code puro: usa arquivo, funciona mesmo sem WebSocket.
+    try{ await uploadRun(lines.join('\n')+'\n','/_web_macro.nc'); }catch(e){ toast('Erro na macro: '+e.message,'err'); }
+  } else {
+    await runLines(m.code, line=>log('> '+line,'msg'));
+  }
+}
+let macroEditIndex=-1;
+function openMacroEditor(i=-1){
+  macroEditIndex=i;
+  const m=i>=0?S.macros[i]:{name:'',icon:'★',color:'#58a6ff',type:'gcode',code:'',confirm:true,mode:'any'};
+  $('#macroDlgTitle').textContent=i>=0?'Editar macro':'Nova macro';
+  $('#macroName').value=m.name; $('#macroIcon').value=m.icon; $('#macroColor').value=m.color||'#58a6ff';
+  $('#macroType').value=m.type||'gcode'; $('#macroMode').value=m.mode||'any';
+  $('#macroCode').value=m.code||''; $('#macroConfirm').checked=!!m.confirm;
+  $('#macroDelete').style.display=i>=0?'inline-block':'none';
+  $('#macroDlg').showModal();
+}
+function saveMacro(){
+  const m={name:$('#macroName').value.trim(),icon:$('#macroIcon').value.trim()||'★',color:$('#macroColor').value,type:$('#macroType').value,mode:$('#macroMode').value,code:$('#macroCode').value,confirm:$('#macroConfirm').checked};
+  if(!m.name){ toast('Nome obrigatório','err'); return; }
+  if(macroEditIndex>=0) S.macros[macroEditIndex]=m; else S.macros.push(m);
+  $('#macroDlg').close(); renderMacros(); renderQuickMacros(); toast('Macro salva (lembre de salvar na máquina)','ok');
+}
+async function saveMacrosFile(){
+  const blob=new Blob([JSON.stringify(S.macros,null,2)],{type:'application/json'});
+  const fd=new FormData(); fd.append('path','/'); fd.append('/macros.jsonS',String(blob.size)); fd.append('myfile[]',blob,'/macros.json');
+  try{ const r=await fetch('/files',{method:'POST',body:fd}); if(!r.ok) throw new Error('HTTP '+r.status); toast('macros.json gravado','ok'); await loadFiles(); }
+  catch(e){ toast('Erro ao gravar macros','err'); }
+}
+
+/* ----------------------------- commands/actions ----------------------------- */
+function jog(axisDir){
+  const step=toMm($('#jogStep').value);
+  const axis=axisDir[0], dir=axisDir[1]==='+'?1:-1;
+  const feed=toMm(axis==='Z'?$('#jogFeedZ').value:$('#jogFeedXY').value);
+  send(`$J=G91 G21 ${axis}${dir*step} F${feed}`);
+}
+function powerValue(){ return Number($('#powerValue').value||$('#powerRange').value||0); }
+function setPower(v){ v=Math.max(0,Math.min(Number($('#powerValue').max)||1000,Number(v)||0)); $('#powerValue').value=v; $('#powerRange').value=Math.min(v,Number($('#powerRange').max)||1000); }
+function setPowerPct(pct){
+  const max=isLaserMode()?1000:12000;
+  setPower(Math.round(max*Number(pct)/100));
+}
+function setLaserCmd(cmd, persist=true){
+  S.prefs.laserCmd = cmd==='M4' ? 'M4' : 'M3';
+  if(persist) localStorage.setItem('ttc450.prefs',JSON.stringify(S.prefs));
+  $$('.laser-cmd-btn').forEach(b=>b.classList.toggle('primary', b.dataset.laserCmd===S.prefs.laserCmd));
+  const info=S.prefs.laserCmd==='M4'
+    ? 'M4 dinâmico: potência proporcional à velocidade; precisa de movimento (Pulso M4/linha ou G-code). Não use M4 parado.'
+    : 'M3 fixo: potência constante; ideal para foco/teste estático. M4 dinâmico: potência proporcional à velocidade; precisa de movimento.';
+  $$('.laser-cmd-info').forEach(e=>{ e.textContent=info; });
+}
+let laserBusy=false;
+async function laserOff(){
+  // M5 imediato pelo WS (se disponível) + arquivo de fallback via HTTP.
+  if(S.wsOpen) send('M5');
+  try{ await uploadRun('M5\n','/_web_laser_off.nc'); }catch(e){}
+  toast('M5 enviado','ok');
+  $('#laserMsg').textContent='M5 enviado.';
+}
+async function laserPulse(value, seconds){
+  if(!requireLaser()) return;
+  const s=Math.max(0,Math.min(1000,Number(value)||0)); const sec=Math.max(0.2,Math.min(30,Number(seconds)||1));
+  const isM4=S.prefs.laserCmd==='M4';
+  const feed=100;
+  const mm=Math.max(0.5,(feed/60)*sec);
+  if(isM4){
+    if(!needConfirm(`M4 dinâmico: o teste vai mover ~${mm.toFixed(1)} mm em X (ida e volta) para o laser acender. Confirme espaço, óculos e material.`)) return;
+  } else {
+    if(!needConfirm(`Pulso ${sec}s em S${s} (${(s/10).toFixed(1)}%). Óculos e área segura?`)) return;
+  }
+  if(laserBusy){ toast('Aguarde o pulso anterior terminar','err'); return; }
+  laserBusy=true;
+  $('#laserMsg').textContent=isM4
+    ? `M4 dinâmico S${s}: linha de ~${mm.toFixed(1)} mm em X…`
+    : `Pulso ${sec}s em S${s}… (G1 F100 M3 S${s})`;
+  try{
+    // No modo laser do FluidNC, M3/M4 S... sozinhos são zerados porque o bloco
+    // não é um movimento de feed. O G1 é essencial.
+    // M3 = potência fixa (basta G1 sem eixos). M4 = potência dinâmica: precisa
+    // de movimento real; o teste faz uma ida e volta curta em X.
+    const code = isM4
+      ? `G21 G91\nG1 X${mm.toFixed(3)} F${feed} M4 S${s}\nG1 X-${mm.toFixed(3)} F${feed} M4 S${s}\nG90\nM5\n`
+      : `G21 G90\nG1 F100 M3 S${s}\nG4 P${sec}\nM5\n`;
+    await uploadRun(code, '/_web_laser_pulse.nc');
+    $('#laserMsg').textContent=isM4
+      ? `Teste M4 enviado: linha de ~${mm.toFixed(1)} mm em X (S${s}) + M5.`
+      : `Pulso enviado: G1 F100 M3 S${s} + M5.`;
+    toast('Pulso enviado','ok');
+  }catch(e){ $('#laserMsg').textContent='Erro no pulso: '+e.message; toast('Erro no pulso','err'); }
+  setTimeout(()=>{ laserBusy=false; }, (isM4?sec*2000:sec*1000)+1500);
+}
+async function laserContinuous(value){
+  if(!requireLaser()) return;
+  const s=Math.max(0,Math.min(1000,Number(value)||0));
+  if(S.prefs.laserCmd==='M4'){
+    toast('M4 é dinâmico e precisa de movimento; use Pulso M4 (linha) ou o G-code do LightBurn.','err');
+    return;
+  }
+  if(!needConfirm(`Ligar o laser em S${s} (${(s/10).toFixed(1)}%)? Ele fica ligado até M5.`)) return;
+  try{
+    await uploadRun(`G1 F100 M3 S${s}\n`, '/_web_laser_on.nc');
+    toast('Laser ligado em S'+s,'err');
+    $('#laserMsg').textContent='LIGADO em S'+s+' (G1 F100 M3) — use DESLIGAR.';
+  }catch(e){ toast('Erro ao ligar: '+e.message,'err'); }
+}
+async function powerOn(){
+  const v=powerValue();
+  if(isLaserMode()){
+    if(!requireLaser()) return;
+    if(S.prefs.laserCmd==='M4'){
+      toast('M4 é dinâmico e precisa de movimento; use Pulso M4 (linha) ou o G-code. Para estático, selecione M3.','err');
+      return;
+    }
+    if(!needConfirm(`Ligar o laser em S${v}?`)) return;
+    try{
+      await uploadRun(`G21 G90\nG1 F100 M3 S${v}\n`, '/_web_laser_on.nc');
+      toast('Laser ligado em S'+v,'ok');
+    }catch(e){ toast('Erro: '+e.message,'err'); }
+  } else {
+    if(!requireCnc()) return;
+    if(!needConfirm(`Ligar o spindle em S${v}?`)) return;
+    try{
+      await uploadRun(`M3 S${v}\n`, '/_web_spindle_on.nc');
+      toast('Spindle ligado em S'+v,'ok');
+    }catch(e){ toast('Erro: '+e.message,'err'); }
+  }
+}
+async function probe(){
+  const max=Math.abs(Number($('#probeMax').value)||20);
+  const feed=Math.abs(Number($('#probeFeed').value)||100);
+  const thick=Number($('#probeThick').value)||0;
+  const retract=Math.abs(Number($('#probeRetract').value)||2);
+  if(!needConfirm('Probe Z: descer até tocar a placa? Confirme a placa em gpio.22.')) return;
+  $('#probeStatus').textContent='Probing…';
+  let done=false, probeOk=false;
+  const handler=e=>{ done=true; probeOk=!!e.detail.ok; };
+  window.addEventListener('prb',handler);
+  await send(`G38.2 Z-${max} F${feed}`);
+  for(let i=0;i<120 && !done;i++) await sleep(250);
+  window.removeEventListener('prb',handler);
+  if(!done || !probeOk){ $('#probeStatus').textContent='Sem contato (PRB 0) — verifique a placa/limite.'; toast('Probe não tocou','err'); return; }
+  await send(`G10 L20 P0 Z${thick}`);
+  await send('G91 G0 Z'+retract);
+  await send('G90');
+  $('#probeStatus').textContent='Probe OK; Z zerado com espessura '+thick+' mm.';
+  toast('Probe concluído','ok');
+}
+async function waitOnline(){
+  toast('Reiniciando; aguardando…','');
+  for(let i=0;i<60;i++){
+    await sleep(1000);
+    const t=await query('$State',2500);
+    if(/State\s+\d+/.test(t)){ toast('Online','ok'); S.configDump=''; S.settings=[]; await loadAll(); await loadConfigDump(); await loadSettings(); return; }
+  }
+  toast('Não voltou a responder','err');
+}
+async function softReset(){
+  if(!S.wsOpen){ toast('WS desconectado','err'); return; }
+  fetch('/command?commandText='+encodeURIComponent(String.fromCharCode(24))+'&PAGEID='+S.pageID,{cache:'no-store'}).catch(()=>{});
+  toast('Soft reset enviado','ok');
+}
+async function doAction(a){
+  switch(a){
+    case 'refresh-all': await loadAll(); await loadConfigDump(); await loadSettings(); await loadFiles(); await loadSD(); break;
+    case 'unlock': await send('$X'); break;
+    case 'home': await send('$H'); break;
+    case 'zero-x': await send('G10 L20 P0 X0'); break;
+    case 'zero-y': await send('G10 L20 P0 Y0'); break;
+    case 'zero-z': await send('G10 L20 P0 Z0'); break;
+    case 'zero-xy': await send('G10 L20 P0 X0 Y0'); break;
+    case 'zero-xyz': await send('G10 L20 P0 X0 Y0 Z0'); break;
+    case 'go-zero': await send('G90 G0 X0 Y0'); break;
+    case 'laser-off': await laserOff(); break;
+    case 'spindle-off': await send('M5'); break;
+    case 'motors-off': await send('M18'); break;
+    case 'mode-laser': if(needConfirm('Mudar para laser e reiniciar? Desligue a máquina antes de trocar o cabo.')){ await query('$Config/Filename=config_laser_ts35.yaml'); await query('$Bye',3000).catch(()=>{}); await waitOnline(); } break;
+    case 'mode-cnc': if(needConfirm('Mudar para CNC e reiniciar? Desligue a máquina antes de trocar o cabo.')){ await query('$Config/Filename=config_cnc_ts35.yaml'); await query('$Bye',3000).catch(()=>{}); await waitOnline(); } break;
+    case 'restart': await query('$Bye',3000).catch(()=>{}); await waitOnline(); break;
+    case 'soft-reset': await softReset(); break;
+    case 'config-dump': await loadConfigDump(); break;
+    case 'pwm50': await laserPulse(500,1); $('#pwmTestResult').textContent='50% · 1 s enviado'; break;
+  }
+}
+
+/* ----------------------------- console ----------------------------- */
+let consoleLines=[];
+function log(text, cls=''){
+  const line={text:String(text), cls};
+  consoleLines.push(line); if(consoleLines.length>500) consoleLines.shift();
+  const out=$('#consoleOut');
+  if(out){
+    const d=document.createElement('div'); if(cls) d.className=cls; d.textContent=text;
+    out.appendChild(d);
+    while(out.childElementCount>500) out.removeChild(out.firstChild);
+    if(S.prefs.autoscroll) out.scrollTop=out.scrollHeight;
+  }
+  if(cls==='err'||cls==='msg') addEvent(text,cls);
+}
+function addEvent(text,cls=''){
+  const box=$('#dashEvents'); if(!box) return;
+  const d=document.createElement('div'); if(cls) d.className=cls; d.textContent=String(text).slice(0,300);
+  box.appendChild(d);
+  while(box.childElementCount>120) box.removeChild(box.firstChild);
+  box.scrollTop=box.scrollHeight;
+}
+function checkModeCommand(text){
+  if(isLaserMode()){
+    const m=text.match(/\bM3\b[^\n]*\bS(\d+)/i);
+    if(m && Number(m[1])>1000) return needConfirm('Modo LASER ativo: S'+m[1]+' parece comando de spindle CNC. Continuar mesmo assim?');
+  } else {
+    const m=text.match(/\bM3\b[^\n]*\bS(\d+)/i);
+    if(/\bM4\b/i.test(text) || (m && Number(m[1])<=1000)) return needConfirm('Modo CNC ativo: M4/S baixo podem não acionar o relé do spindle. Continuar mesmo assim?');
+  }
+  return true;
+}
+async function consoleSend(){
+  const input=$('#consoleInput'); const text=input.value.trim(); if(!text) return;
+  if(!checkModeCommand(text)) return;
+  input.value=''; log('> '+text,'msg');
+  if(S.wsOpen) await send(text);
+  else { const r=await query(text); log(r||'(sem resposta)', /error/i.test(r)?'err':'ok'); }
+}
+async function mdiSend(){
+  const input=$('#mdiInput'); const text=input.value.trim(); if(!text) return;
+  if(!checkModeCommand(text)) return;
+  log('MDI> '+text,'msg'); $('#mdiOut').textContent='> '+text;
+  await runLines(text, line=>{ $('#mdiOut').textContent+='\n> '+line; });
+}
+
+/* ----------------------------- settings/wifi/firmware ----------------------------- */
+async function loadAll(){
+  await loadIdentity();
+  await loadWifi();
+  await loadOffsets();
+  await loadFirmware();
+  await loadFiles(S.filePath);
+  await loadMacros();
+  S.initialized=true;
+}
+
+/* ----------------------------- preferences ----------------------------- */
+function loadPrefs(){
+  try{ const p=JSON.parse(localStorage.getItem('ttc450.prefs')||'{}'); S.prefs={...DEFAULTS,...p}; }catch(e){ S.prefs={...DEFAULTS}; }
+  applyPrefs();
+}
+function applyPrefs(){
+  document.body.classList.toggle('light', S.prefs.theme==='light');
+  $('#prefUnits').value=S.prefs.units; $('#prefTheme').value=S.prefs.theme; $('#prefPoll').value=String(S.prefs.pollMs);
+  $('#prefVerbose').value=S.prefs.verbose?'1':'0'; $('#prefAutoscroll').checked=!!S.prefs.autoscroll; $('#prefConfirm').checked=!!S.prefs.confirmDanger;
+  $('#consoleVerbose').checked=!!S.prefs.verbose; $('#consoleAutoscroll').checked=!!S.prefs.autoscroll;
+  setBind('unit', unit());
+  const cam=$('#cameraUrl'); if(cam) cam.value=S.prefs.cameraUrl||'';
+  applyCamera();
+  setLaserCmd(S.prefs.laserCmd,false);
+  restartPoll();
+}
+function savePrefs(){
+  S.prefs.units=$('#prefUnits').value; S.prefs.theme=$('#prefTheme').value; S.prefs.pollMs=Number($('#prefPoll').value);
+  S.prefs.verbose=$('#prefVerbose').value==='1'; S.prefs.autoscroll=$('#prefAutoscroll').checked; S.prefs.confirmDanger=$('#prefConfirm').checked;
+  localStorage.setItem('ttc450.prefs',JSON.stringify(S.prefs)); applyPrefs(); toast('Preferências salvas','ok');
+}
+let pollTimer=null;
+function restartPoll(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer=setInterval(()=>{ if(S.wsOpen && S.pageID!=null) send('?'); }, Math.max(250,S.prefs.pollMs));
+}
+function applyCamera(){
+  const url=(S.prefs.cameraUrl||'').trim(); const img=$('#cameraImg'); const msg=$('#cameraMsg');
+  if(!img) return;
+  if(url){ img.src=url; img.style.display='inline-block'; msg.textContent=''; img.onerror=()=>{ img.style.display='none'; msg.textContent='Não consegui abrir a câmera.'; }; }
+  else { img.style.display='none'; msg.textContent='Nenhuma câmera configurada.'; }
+}
+
+/* ----------------------------- tabs ----------------------------- */
+function showTab(name){
+  $$('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  $$('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+name));
+  location.hash=name;
+  if(name==='files'){ (async()=>{ await loadFiles(); await loadSD(); })(); }
+  if(name==='settings'){ (async()=>{ await loadSettings(); await loadWifi(); await loadFirmware(); await loadConfigDump(); })(); }
+  if(name==='laser'||name==='cnc'){ (async()=>{ if(!S.configDump) await loadConfigDump(); if(!S.settings.length) await loadSettings(); })(); }
+  if(name==='about'){ (async()=>{ await loadFirmware(); await loadWifi(); })(); }
+  if(name==='console'){ const o=$('#consoleOut'); if(o) o.scrollTop=o.scrollHeight; }
+  if(name==='help'){ loadHelpLang(); filterHelp(); }
+}
+function filterHelp(){
+  const q=($('#helpSearch').value||'').toLowerCase().trim();
+  let n=0;
+  $$('#helpContent .help-section').forEach(sec=>{
+    const show=!q || sec.textContent.toLowerCase().includes(q);
+    sec.style.display=show?'':'none';
+    if(show) n++;
+  });
+  $$('#helpNav a').forEach(a=>{
+    const sec=document.getElementById(a.dataset.goto);
+    a.style.display=(!sec || sec.style.display!=='none')?'':'none';
+  });
+  const c=$('#helpCount'); if(c) c.textContent=n+' seções';
+}
+
+/* ----------------------------- init/events ----------------------------- */
+function init(){
+  loadPrefs();
+  initI18n();
+  // nav
+  $$('.nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+  const h=location.hash.replace('#',''); if(h && $('#tab-'+h)) showTab(h);
+  // generic data-cmd
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-cmd]');
+    if(b){
+      if(b.dataset.requires==='cnc' && !requireCnc()) return;
+      if(b.dataset.requires==='laser' && !requireLaser()) return;
+      const c=b.dataset.cmd;
+      if(b.dataset.confirm && !needConfirm(b.dataset.confirm)) return;
+      log('> '+c,'msg'); send(c);
+    }
+  });
+  // actions
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-action]'); if(!b) return;
+    if(b.dataset.confirm && !needConfirm(b.dataset.confirm)) return;
+    doAction(b.dataset.action);
+  });
+  // jog
+  document.addEventListener('click',e=>{ const b=e.target.closest('[data-jog]'); if(b) jog(b.dataset.jog); });
+  // power presets (control)
+  document.addEventListener('click',e=>{ const b=e.target.closest('[data-power]'); if(b) setPowerPct(b.dataset.power); });
+  // laser presets
+  document.addEventListener('click',e=>{ const b=e.target.closest('[data-laser-power]'); if(b){ const v=b.dataset.laserPower; $('#laserRange').value=v; $('#laserValue').value=v; $('#laserPct').textContent=(Number(v)/10).toFixed(1)+'%'; $('#laserS').textContent=v; } });
+  // M3 fixo / M4 dinâmico
+  document.addEventListener('click',e=>{ const b=e.target.closest('[data-laser-cmd]'); if(b) setLaserCmd(b.dataset.laserCmd); });
+  // laser action
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-laser-action]'); if(!b) return;
+    const a=b.dataset.laserAction;
+    if(b.dataset.confirm && !needConfirm(b.dataset.confirm)) return;
+    if(a==='off') laserOff();
+    else if(a==='pulse') laserPulse(Number($('#laserValue').value||$('#laserRange').value), Number($('#pulseSeconds').value||1));
+    else if(a==='on') laserContinuous(Number($('#laserValue').value||$('#laserRange').value));
+    else if(a==='pwm50') doAction('pwm50');
+  });
+  // overrides
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-ovr]'); if(!b) return;
+    const map={ 'feed+':0x91,'feed-':0x92,'feed++':0x93,'feed--':0x94,'feed0':0x90,
+      'rapid25':0x97,'rapid50':0x95,'rapid100':0x96,
+      'spindle+':0x9A,'spindle-':0x9B,'spindle0':0x99 };
+    const c=map[b.dataset.ovr]; if(c!=null) sendOvr(c);
+  });
+  // console quick
+  document.querySelectorAll('[data-console]').forEach(b=>b.onclick=()=>{ $('#consoleInput').value=b.dataset.console; consoleSend(); });
+  // controls
+  $('#panicBtn').onclick=laserOff;
+  $('#laserRange').oninput=e=>{ $('#laserValue').value=e.target.value; $('#laserPct').textContent=(Number(e.target.value)/10).toFixed(1)+'%'; $('#laserS').textContent=e.target.value; };
+  $('#laserValue').oninput=e=>{ const v=Math.max(0,Math.min(1000,Number(e.target.value)||0)); $('#laserRange').value=v; $('#laserPct').textContent=(v/10).toFixed(1)+'%'; };
+  $('#powerRange').oninput=e=>{ $('#powerValue').value=e.target.value; };
+  $('#powerValue').oninput=e=>{ $('#powerRange').value=e.target.value; };
+  $('#laserRange').max=1000; $('#laserValue').max=1000;
+  // console
+  $('#consoleSend').onclick=consoleSend;
+  $('#consoleInput').addEventListener('keydown',e=>{ if(e.key==='Enter') consoleSend(); });
+  $('#consoleClear').onclick=()=>{ consoleLines=[]; $('#consoleOut').textContent='—'; };
+  $('#consoleVerbose').onchange=e=>{ S.prefs.verbose=e.target.checked; localStorage.setItem('ttc450.prefs',JSON.stringify(S.prefs)); $('#prefVerbose').value=S.prefs.verbose?'1':'0'; };
+  $('#consoleAutoscroll').onchange=e=>{ S.prefs.autoscroll=e.target.checked; localStorage.setItem('ttc450.prefs',JSON.stringify(S.prefs)); $('#prefAutoscroll').checked=S.prefs.autoscroll; };
+  $('#consoleFilter').oninput=()=>{ const f=$('#consoleFilter').value.toLowerCase(); $$('#consoleOut > div').forEach(d=>{ d.style.display=!f||d.textContent.toLowerCase().includes(f)?'':'none'; }); };
+  $('#clearEvents').onclick=()=>{ $('#dashEvents').textContent='—'; };
+  // mdi
+  $('#mdiSend').onclick=mdiSend; $('#mdiInput').addEventListener('keydown',e=>{ if(e.key==='Enter') mdiSend(); });
+  // probe
+  $('#probeStart').onclick=probe;
+  // files
+  $('#fileRefresh').onclick=()=>loadFiles();
+  $('#fileUploadBtn').onclick=uploadFiles;
+  $('#fileMkdir').onclick=mkdir;
+  // settings
+  $('#settingsRefresh').onclick=loadSettings;
+  $('#settingsFilter').oninput=renderSettings;
+  $('#wifiSave').onclick=saveWifi;
+  $('#wifiReload').onclick=loadWifi;
+  $('#fwRefresh').onclick=loadFirmware;
+  $('#configDumpRefresh').onclick=loadConfigDump;
+  $('#configDumpDownload').onclick=()=>{ const blob=new Blob([S.configDump||''],{type:'text/yaml'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='config_dump.yaml'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); };
+  $('#prefSave').onclick=savePrefs;
+  $('#reportApply').onclick=async()=>{ const ms=Math.max(0,Math.min(5000,Number($('#reportInterval').value)||0)); const r=await query('$Report/Interval='+ms); toast((r||'ok').trim().slice(0,80),'ok'); };
+  $('#reportNow').onclick=()=>send('?');
+  // help / manual
+  $('#helpPrint').onclick=()=>window.print();
+  $('#helpSearch').oninput=filterHelp;
+  $$('#helpNav a').forEach(a=>a.onclick=e=>{
+    e.preventDefault();
+    showTab('help');
+    const el=document.getElementById(a.dataset.goto);
+    if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),0);
+  });
+  filterHelp();
+  if(location.hash.startsWith('#help-')){
+    showTab('help');
+    const el=document.getElementById(location.hash.slice(1));
+    if(el) setTimeout(()=>el.scrollIntoView({block:'start'}),120);
+  }
+  $('#otaBtn').onclick=async()=>{
+    const f=$('#otaInput').files[0]; if(!f){ toast('Escolha um .bin','err'); return; }
+    if(!needConfirm('Enviar firmware '+f.name+'? A placa reinicia e não pode ser desligada.')) return;
+    const fd=new FormData(); fd.append('/'+f.name+'S',String(f.size)); fd.append('myfile[]',f,'/'+f.name);
+    $('#otaMsg').textContent='Enviando…';
+    try{ const r=await fetch('/updatefw',{method:'POST',body:fd}); $('#otaMsg').textContent='HTTP '+r.status+' — reiniciando…'; await waitOnline(); }
+    catch(e){ $('#otaMsg').textContent='Erro: '+e.message; }
+  };
+  // macros
+  $('#macroAdd').onclick=()=>openMacroEditor(-1);
+  $('#macroSave').onclick=saveMacro;
+  $('#macroCancel').onclick=()=>$('#macroDlg').close();
+  $('#macroDelete').onclick=()=>{ if(macroEditIndex>=0 && confirm('Apagar esta macro?')){ S.macros.splice(macroEditIndex,1); $('#macroDlg').close(); renderMacros(); renderQuickMacros(); } };
+  $('#macroSaveFile').onclick=saveMacrosFile;
+  $('#macroReload').onclick=loadMacros;
+  // camera
+  $('#cameraSave').onclick=()=>{ S.prefs.cameraUrl=$('#cameraUrl').value.trim(); localStorage.setItem('ttc450.prefs',JSON.stringify(S.prefs)); applyCamera(); toast('Câmera salva','ok'); };
+  $('#cameraReload').onclick=applyCamera;
+  // tablet
+  $('#fullscreenBtn').onclick=()=>{ const el=document.documentElement; if(el.requestFullscreen) el.requestFullscreen().catch(()=>{}); };
+  // wifi mode initial
+  $('#wifiMode').value='STA>AP';
+  // initial data (HTTP; o WS serve para status/comandos)
+  loadAll();
+  connectWS();
+  setTimeout(()=>{ if(!S.wsOpen) log('WebSocket não conectou ainda; comandos de G-code ficam limitados.','warn'); },5000);
+}
+document.addEventListener('DOMContentLoaded',init);
+})();
+</script>
+</body>
+</html>

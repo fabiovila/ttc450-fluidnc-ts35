@@ -12,6 +12,10 @@ The files in this folder are the `ts35` module from the community PR
 - `TS35DisplayDriver.cpp/.h` — ST7796 + ADS7843E driver on the shared SPI bus.
 - `TS35Model.cpp/.h` — status-report parser and command builder.
 
+The prebuilt firmware also carries one local patch, documented in
+[`PATCHES.md`](PATCHES.md): a hard limit stops the machine but enters
+`State::Alarm` (recoverable with `$X`) instead of `State::Critical`.
+
 The module registers itself at the end of `TS35Module.cpp`:
 
 ```cpp
@@ -40,7 +44,12 @@ s = s.replace(
 open(p, "w").write(s)
 PY
 
+# Apply the recoverable hard-limit patch.
+git apply /path/to/ttc450/source/patches/0001-hard-limits-recoverable.patch
+
 pio run -e wifi
+# Copy firmware.bin aside before buildfs: buildfs deletes it.
+cp .pio/build/wifi/firmware.bin /tmp/firmware.bin
 pio run -e wifi -t buildfs
 ```
 
@@ -53,10 +62,16 @@ Outputs:
 .pio/build/wifi/littlefs.bin
 ```
 
-To get a LittleFS image that already contains the TTC450 configs, copy
-`config/config_cnc_ts35.yaml` and `config/config_laser_ts35.yaml` into
-`FluidNC/data/`, copy the CNC one to `FluidNC/data/config.yaml`, and run
-`pio run -e wifi -t buildfs` again.
+To get a LittleFS image that already contains the TTC450 configs and the custom
+WebUI, copy `config/config_cnc_ts35.yaml` and
+`config/config_laser_ts35.yaml` into `FluidNC/data/`, copy the CNC one to
+`FluidNC/data/config.yaml`, copy the published UI files
+(`ui/index.html.gz`, `ui/help-en.html`, `ui/macros.json`, `ui/favicon.ico`)
+into `FluidNC/data/`, and run `pio run -e wifi -t buildfs` again.
+
+The custom UI is documented in [`../ui/README.md`](../ui/README.md) and
+[`docs/en/webui.md`](../docs/en/webui.md). `index.html` is the source;
+`index.html.gz` is what the controller serves.
 
 ## Flash offsets
 
@@ -91,6 +106,10 @@ Os arquivos desta pasta são o módulo `ts35` do PR comunitário
 - `TS35DisplayDriver.cpp/.h` — driver ST7796 + ADS7843E no SPI compartilhado.
 - `TS35Model.cpp/.h` — parser dos relatórios de status e montagem dos comandos.
 
+O firmware pré-compilado também leva um patch local, documentado em
+[`PATCHES.md`](PATCHES.md): o fim de curso para a máquina, mas entra em
+`State::Alarm` (recuperável com `$X`) em vez de `State::Critical`.
+
 O módulo se registra sozinho no fim do `TS35Module.cpp`:
 
 ```cpp
@@ -119,7 +138,12 @@ s = s.replace(
 open(p, "w").write(s)
 PY
 
+# Aplica o patch de hard limit recuperável.
+git apply /caminho/para/ttc450/source/patches/0001-hard-limits-recoverable.patch
+
 pio run -e wifi
+# Copie o firmware.bin para fora antes do buildfs: ele apaga o arquivo.
+cp .pio/build/wifi/firmware.bin /tmp/firmware.bin
 pio run -e wifi -t buildfs
 ```
 
@@ -132,9 +156,16 @@ Saídas:
 .pio/build/wifi/littlefs.bin
 ```
 
-Para o LittleFS já com as configs da TTC450, copie `config/config_cnc_ts35.yaml`
-e `config/config_laser_ts35.yaml` para `FluidNC/data/`, copie a CNC para
-`FluidNC/data/config.yaml` e rode `pio run -e wifi -t buildfs` de novo.
+Para o LittleFS já com as configs da TTC450 e a WebUI própria, copie
+`config/config_cnc_ts35.yaml` e `config/config_laser_ts35.yaml` para
+`FluidNC/data/`, copie a CNC para `FluidNC/data/config.yaml`, copie os arquivos
+publicados da UI (`ui/index.html.gz`, `ui/help-en.html`, `ui/macros.json`,
+`ui/favicon.ico`) para `FluidNC/data/` e rode `pio run -e wifi -t buildfs` de
+novo.
+
+A UI própria está documentada em [`../ui/README.pt-BR.md`](../ui/README.pt-BR.md)
+e [`docs/pt-BR/interface-web.md`](../docs/pt-BR/interface-web.md). O
+`index.html` é a fonte; o `index.html.gz` é o que a controladora serve.
 
 ### Endereços de flash
 

@@ -17,8 +17,9 @@
 - **Backup:** guarde o dump de 8 MB e os arquivos de config. O dump é a única
   forma de voltar ao firmware original com NVS/SPIFFS intactos.
 - **Build TS35:** não é oficial. Teste primeiro com os motores desconectados e o
-  laser desligado. O cartão SD fica desativado nesse build; o toque começa
-  desabilitado até a calibração.
+  laser desligado. O cartão SD fica desativado nesse build; os configs
+  publicados liberam os controles da tela, então calibre o touch antes de
+  confiar no JOG/ZERO.
 
 ## Referências
 

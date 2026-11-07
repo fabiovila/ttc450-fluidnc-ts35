@@ -1,0 +1,23 @@
+diff --git a/FluidNC/src/Protocol.cpp b/FluidNC/src/Protocol.cpp
+index f257a1e..7e03ac7 100644
+--- a/FluidNC/src/Protocol.cpp
++++ b/FluidNC/src/Protocol.cpp
+@@ -484,7 +484,17 @@ static void protocol_do_alarm(void* alarmVoid) {
+         report_error_message(Message::MustReboot);
+         return;
+     }
+-    if (lastAlarm == ExecAlarm::HardLimit || lastAlarm == ExecAlarm::HardStop) {
++    if (lastAlarm == ExecAlarm::HardLimit) {
++        // Hard limits are recoverable: stop the machine, but use State::Alarm
++        // (not Critical) so $X / the panel's unlock can clear it and the
++        // operator can jog away from the switch, as in classic Grbl.
++        protocol_disable_steppers();
++        Homing::set_all_axes_unhomed();
++        set_state(State::Alarm);
++        alarm_msg(lastAlarm);
++        return;
++    }
++    if (lastAlarm == ExecAlarm::HardStop) {
+         protocol_disable_steppers();
+         Homing::set_all_axes_unhomed();
+         set_state(State::Critical);  // Set system alarm state

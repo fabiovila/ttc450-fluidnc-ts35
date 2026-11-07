@@ -19,10 +19,15 @@ Ready-to-flash build for **MKS DLC32 V2.1 (ESP32, 8 MB) + MKS TS35-R V2.0**.
 
 Full instructions: [../../docs/en/ts35-firmware.md](../../docs/en/ts35-firmware.md).
 
+Custom WebUI: [../../ui/README.md](../../ui/README.md) ·
+[../../docs/en/webui.md](../../docs/en/webui.md).
+
 Quick flash (Linux/macOS): `../../scripts/flash-ts35.sh /dev/ttyUSB0`.
 
-> Not an official FluidNC build. The SD card is disabled in this build and the
-> touch panel starts read-only until calibrated.
+> Not an official FluidNC build. The SD card is disabled in this build. The
+> shipped configs enable the panel controls; calibrate the touch before
+> trusting JOG/ZERO. Hard limits are recoverable: the machine stops, then
+> `$X` / UNLOCK lets you jog away.
 
 ---
 
@@ -44,7 +49,12 @@ Build pronto para gravar em **MKS DLC32 V2.1 (ESP32, 8 MB) + MKS TS35-R V2.0**.
 
 Instruções completas: [../../docs/pt-BR/firmware-ts35.md](../../docs/pt-BR/firmware-ts35.md).
 
+WebUI própria: [../../ui/README.pt-BR.md](../../ui/README.pt-BR.md) ·
+[../../docs/pt-BR/interface-web.md](../../docs/pt-BR/interface-web.md).
+
 Gravação rápida (Linux/macOS): `../../scripts/flash-ts35.sh /dev/ttyUSB0`.
 
-> Não é um build oficial do FluidNC. Neste build o cartão SD fica desativado e o
-> touch começa em modo somente leitura até ser calibrado.
+> Não é um build oficial do FluidNC. Neste build o cartão SD fica desativado.
+> Os configs publicados liberam os controles da tela; calibre o touch antes de
+> confiar no JOG/ZERO. Os fins de curso são recuperáveis: a máquina para e o
+> `$X` / UNLOCK permite voltar.

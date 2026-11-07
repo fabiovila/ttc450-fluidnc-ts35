@@ -16,6 +16,8 @@ TTC450 configurations already exist (the ones in this repo are based on them).
 - Spindle relay on the CNC port (`gpio.32` in CNC mode).
 - WiFi with **STA + AP fallback** (`STA>AP`), automatic reconnect,
   `fluidnc.local` (mDNS), WebUI, Telnet, WebSocket.
+- A **custom bilingual WebUI** replaces the stock ESP3D page in the TS35
+  build; it uses the port-80 WebSocket. See [webui.md](webui.md).
 - OTA updates.
 - **Two config files**: `config_cnc.yaml` and `config_laser.yaml`, switched
   with `$Config/Filename=...` + `$Bye`, with no reflash.
@@ -133,8 +135,9 @@ Use this if you want to keep the panel. The build is already compiled in
 
 On Windows, use the MKS Laser Tool with `firmware/ts35/ttc450-ts35-8mb.bin`
 (same procedure as the stock firmware, flash size 8 MB). Read
-[ts35-firmware.md](ts35-firmware.md) first: the panel starts read-only and the
-**SD card is disabled** in this build.
+[ts35-firmware.md](ts35-firmware.md) first: the panel controls are enabled by
+default (calibrate the touch before trusting JOG/ZERO) and the **SD card is
+disabled** in this build.
 
 ### 3. First access
 
@@ -232,7 +235,7 @@ OK: config_laser.yaml
 The TS35 configs use the `ts35` section from PR #1805. The official validator
 does not know that section yet, so the fields were checked against the module's
 `handler.item()` names and the firmware compiled successfully
-(`Flash: 93.1%`, 1,830,957 of 1,966,080 bytes).
+(`Flash: 93.1%`, 1,830,953 of 1,966,080 bytes).
 
 Notes:
 

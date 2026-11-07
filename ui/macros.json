@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Home",
+    "icon": "⌂",
+    "color": "#58a6ff",
+    "type": "gcode",
+    "mode": "any",
+    "code": "$H",
+    "confirm": true
+  },
+  {
+    "name": "Destravar",
+    "icon": "🔓",
+    "color": "#3fb950",
+    "type": "gcode",
+    "mode": "any",
+    "code": "$X",
+    "confirm": false
+  },
+  {
+    "name": "Zero XY",
+    "icon": "0",
+    "color": "#d29922",
+    "type": "gcode",
+    "mode": "any",
+    "code": "G10 L20 P0 X0 Y0",
+    "confirm": true
+  },
+  {
+    "name": "Laser 5% M3",
+    "icon": "✦",
+    "color": "#f85149",
+    "type": "gcode",
+    "mode": "laser",
+    "code": "G1 F100 M3 S50\nG4 P1\nM5",
+    "confirm": true
+  },
+  {
+    "name": "Laser 5% M4 (linha)",
+    "icon": "≈",
+    "color": "#f85149",
+    "type": "gcode",
+    "mode": "laser",
+    "code": "G21 G91\nG1 X2 F100 M4 S50\nG1 X-2 F100 M4 S50\nG90\nM5",
+    "confirm": true
+  },
+  {
+    "name": "Spindle ON",
+    "icon": "⚙",
+    "color": "#8b949e",
+    "type": "gcode",
+    "mode": "cnc",
+    "code": "M3 S12000",
+    "confirm": true
+  },
+  {
+    "name": "Parar (M5)",
+    "icon": "■",
+    "color": "#f85149",
+    "type": "gcode",
+    "mode": "any",
+    "code": "M5",
+    "confirm": false
+  },
+  {
+    "name": "Park XY",
+    "icon": "⌖",
+    "color": "#bc8cff",
+    "type": "gcode",
+    "mode": "any",
+    "code": "G90 G0 X0 Y0",
+    "confirm": true
+  }
+]

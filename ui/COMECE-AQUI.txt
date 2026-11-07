@@ -1,0 +1,21 @@
+TTC450 — arquivos da página web
+================================
+
+1. Abra a WebUI da máquina (http://<IP-da-maquina>/), aba Files/LocalFS.
+2. Envie para a raiz do LittleFS:
+   - index.html.gz  (obrigatório; já é o arquivo publicado)
+   - help-en.html   (obrigatório para o manual em inglês)
+   - macros.json    (opcional; sem ele a página usa macros padrão)
+   - favicon.ico    (opcional)
+3. Reinicie a controladora ou dê $Bye.
+4. Recarregue http://<IP-da-maquina>/ com Ctrl+F5.
+
+A página detecta o idioma do navegador (pt-* → português; resto → inglês)
+e tem um botão EN/PT no topo. Para forçar: ?lang=en ou ?lang=pt.
+
+NÃO envie index.html (fonte) no lugar de index.html.gz.
+O webui-original.html.gz é só backup da WebUI antiga; para restaurar,
+envie-o como index.html.gz.
+
+Os configs da máquina e os arquivos .nc de laser são separados.
+Veja README.pt-BR.md para detalhes e README.md para inglês.

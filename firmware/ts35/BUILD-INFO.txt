@@ -1,4 +1,4 @@
-Build: FluidNC + TS35 module (community PR #1805)
+Build: FluidNC + TS35 module (community PR #1805) + TTC450 patches
 Base commit: d93a72b2edc2902b5114128bedcf9f953afc16ec
 Branch: feat/ts35-display-module (thcasssio/FluidNC)
 PlatformIO env: wifi
@@ -6,9 +6,23 @@ Platform: platformio/espressif32@6.12.0
 Framework: Arduino core 2.0.17 (GCC 8.4.0)
 Board: MKS DLC32 V2.1 (ESP32, 8 MB flash)
 Panel: MKS TS35-R V2.0 (ST7796 LCD + ADS7843E touch)
-Flash: 1,830,957 / 1,966,080 bytes (93.1%)
-Build date: 2026-10-18
-WebUI: FluidNC data/index.html.gz + favicon.ico
+Flash: 1,830,953 / 1,966,080 bytes (93.1%)
+RAM: 82,112 / 327,680 bytes (25.1%)
+Build date: 2026-11-06
+
+Patches applied:
+  - 0001-hard-limits-recoverable.patch
+      HardLimit -> State::Alarm (stops, then $X/UNLOCK allows jogging away)
+      HardStop and SoftLimit remain State::Critical
+  - platformio.ini pinned to platformio/espressif32@6.12.0
+      (FluidNC stdfs does not build with the GCC 14 toolchain from 7.x)
+
+WebUI: custom bilingual TTC450 page (PT/EN)
+  /index.html.gz
+  /help-en.html
+  /macros.json
+  /favicon.ico
+
 Configs in LittleFS:
   /config.yaml             -> config_cnc_ts35.yaml
   /config_cnc_ts35.yaml
